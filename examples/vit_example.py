@@ -10,127 +10,113 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def main():
-    # Data augmentation and normalization for training
-    transform = transforms.Compose([
-        # Resize images to fit the input size of ViT
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ])
+class ViT:
+    def __init__(self, num_classes=10, weights=ViT_B_16_Weights.DEFAULT, device=None):
+        self.device = device if device else torch.device(
+            "cuda:0" if torch.cuda.is_available() else "cpu")
+        self.model = models.vit_b_16(weights=weights)
+        self.model.heads[0] = nn.Linear(
+            self.model.heads[0].in_features, num_classes)
+        self.model.to(self.device)
 
-# Load CIFAR-10 dataset
-    trainset = torchvision.datasets.CIFAR10(
-        root='./data', train=True, download=True, transform=transform)
-    testset = torchvision.datasets.CIFAR10(
-        root='./data', train=False, download=True, transform=transform)
-
-# Number of batches to use for training and testing
-    num_batches_train = 100
-    num_batches_test = 20
-
-    trainloader = torch.utils.data.DataLoader(
-        trainset, batch_size=4, shuffle=True, num_workers=2)
-    trainloader = itertools.islice(trainloader, num_batches_train)
-
-    testloader = torch.utils.data.DataLoader(
-        testset, batch_size=4, shuffle=False, num_workers=2)
-    testloader = itertools.islice(testloader, num_batches_test)
-
-    classes = ('plane', 'car', 'bird', 'cat', 'deer',
-               'dog', 'frog', 'horse', 'ship', 'truck')
-
-# Load a pre-trained Vision Transformer model
-    weights = ViT_B_16_Weights.DEFAULT
-    model = models.vit_b_16(weights=weights)
-
-# Modify the classifier head for CIFAR-10 (10 classes)
-    in_features = model.heads[0].in_features
-    model.heads[0] = nn.Linear(in_features, 10)
-
-# Move the model to CPU (assuming no GPU available)
-    device = torch.device("cpu")
-    model.to(device)
-
-# Loss function and optimizer
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-
-# Training function
-
-    def train_model(model, criterion, optimizer, num_epochs=2):
-        model.train()
+    def train(self, trainloader, criterion, optimizer, num_epochs=100):
+        self.model.train()
         for epoch in range(num_epochs):
             running_loss = 0.0
             for i, data in enumerate(trainloader, 0):
-                inputs, labels = data[0].to(device), data[1].to(device)
+                inputs, labels = data[0].to(
+                    self.device), data[1].to(self.device)
 
                 optimizer.zero_grad()
-                outputs = model(inputs)
+                outputs = self.model(inputs)
                 loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
 
                 running_loss += loss.item()
-                if i % 50 == 49:  # Print every 50 mini-batches
+                if i % 50 == 49:
                     print(
                         f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 50:.3f}')
                     running_loss = 0.0
         print('Finished Training')
 
-# Test function
-
-    def test_model(model, testloader):
-        model.eval()
+    def test(self, testloader):
+        self.model.eval()
         correct = 0
         total = 0
         with torch.no_grad():
             for data in testloader:
-                images, labels = data[0].to(device), data[1].to(device)
-                outputs = model(images)
+                images, labels = data[0].to(
+                    self.device), data[1].to(self.device)
+                outputs = self.model(images)
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
-        print(
-            f'Accuracy of the network on the test images: {100 * correct / total}%')
+        accuracy = 100 * correct / total
+        print(f'Accuracy of the network on the test images: {accuracy}%')
+        return accuracy
+
+    def visualize(self, testloader, classes):
+        try:
+            dataiter = iter(testloader)
+            images, labels = next(dataiter)
+            imshow(torchvision.utils.make_grid(images))
+            print('GroundTruth: ', ' '.join(
+                f'{classes[labels[j]]}' for j in range(4)))
+            with torch.no_grad():
+                outputs = self.model(images.to(self.device))
+                _, predicted = torch.max(outputs, 1)
+            print('Predicted: ', ' '.join(
+                f'{classes[predicted[j]]}' for j in range(4)))
+        except StopIteration:
+            print("No more data available in the testloader.")
 
 
-# Train and test the model
-    train_model(model, criterion, optimizer, num_epochs=2)
-    test_model(model, testloader)
+def load_cifar10_dataset(transform, num_batches_train=100, num_batches_test=20):
+    trainset = torchvision.datasets.CIFAR10(
+        root='./data', train=True, download=True, transform=transform)
+    trainloader = torch.utils.data.DataLoader(
+        trainset, batch_size=32, shuffle=True, num_workers=2)
+    trainloader = itertools.islice(trainloader, num_batches_train)
 
-# Function to show images
+    testset = torchvision.datasets.CIFAR10(
+        root='./data', train=False, download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(
+        testset, batch_size=32, shuffle=False, num_workers=2)
+    testloader = itertools.islice(testloader, num_batches_test)
 
-    def imshow(img):
-        img = img / 2 + 0.5     # Unnormalize
-        npimg = img.numpy()
-        plt.imshow(np.transpose(npimg, (1, 2, 0)))
-        plt.show()
+    return trainloader, testloader
 
 
-# In the main function, after training and testing the model
+def create_transform():
+    return transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
 
-    try:
-        # Get some random testing images
-        dataiter = iter(testloader)
-        images, labels = next(dataiter)
 
-        # Show images
-        imshow(torchvision.utils.make_grid(images))
-        # Print labels
-        print('GroundTruth: ', ' '.join(
-            f'{classes[labels[j]]}' for j in range(4)))
+def imshow(img):
+    img = img / 2 + 0.5     # Unnormalize
+    npimg = img.numpy()
+    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+    plt.show()
 
-        # Predictions
-        with torch.no_grad():
-            outputs = model(images.to(device))
-            _, predicted = torch.max(outputs, 1)
 
-        print('Predicted: ', ' '.join(
-            f'{classes[predicted[j]]}' for j in range(4)))
+def main():
+    transform = create_transform()
+    trainloader, testloader = load_cifar10_dataset(transform)
 
-    except StopIteration:
-        print("No more data available in the testloader.")
+    classes = ('plane', 'car', 'bird', 'cat', 'deer',
+               'dog', 'frog', 'horse', 'ship', 'truck')
+    vit_model = ViT(num_classes=10, device=None)
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(vit_model.model.parameters(), lr=0.001, momentum=0.9)
+
+    vit_model.train(trainloader, criterion, optimizer, num_epochs=2)
+    vit_model.test(testloader)
+    vit_model.visualize(testloader, classes)
 
 
 if __name__ == '__main__':
