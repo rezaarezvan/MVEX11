@@ -74,13 +74,13 @@ class ViT:
 
 def load_cifar10_dataset(transform, num_batches_train=100, num_batches_test=20):
     trainset = torchvision.datasets.CIFAR10(
-        root='./data', train=True, download=True, transform=transform)
+        root='../extra/datasets', train=True, download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(
         trainset, batch_size=32, shuffle=True, num_workers=2)
     trainloader = itertools.islice(trainloader, num_batches_train)
 
     testset = torchvision.datasets.CIFAR10(
-        root='./data', train=False, download=True, transform=transform)
+        root='../extra/datasets', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(
         testset, batch_size=32, shuffle=False, num_workers=2)
     testloader = itertools.islice(testloader, num_batches_test)

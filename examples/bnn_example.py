@@ -1,90 +1,120 @@
-from torchvision import datasets, transforms
+from pyro.optim import Adam
+from pyro.infer import SVI, Trace_ELBO
+from pyro.distributions import Normal, Categorical
+import pyro
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.distributions as dist
+import torch.optim as optim
+from torchvision import datasets, transforms
+import numpy as np
 
 
-class BayesianLinear(nn.Module):
-    def __init__(self, in_features, out_features):
-        super(BayesianLinear, self).__init__()
-        self.weight_mu = nn.Parameter(torch.Tensor(
-            out_features, in_features).normal_(0, 0.1))
-        self.bias_mu = nn.Parameter(torch.Tensor(out_features).normal_(0, 0.1))
-
-        self.weight_logsigma = nn.Parameter(torch.Tensor(
-            out_features, in_features).normal_(0, 0.1))
-        self.bias_logsigma = nn.Parameter(
-            torch.Tensor(out_features).normal_(0, 0.1))
-
-    def forward(self, input):
-        weight_dist = dist.Normal(
-            self.weight_mu, torch.exp(self.weight_logsigma))
-        bias_dist = dist.Normal(self.bias_mu, torch.exp(self.bias_logsigma))
-        weight = weight_dist.rsample()
-        bias = bias_dist.rsample()
-        return F.linear(input, weight, bias)
-
-
-class BNN(nn.Module):
+class NN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
-        super(BNN, self).__init__()
-        self.fc1 = BayesianLinear(input_size, hidden_size)
-        self.fc2 = BayesianLinear(hidden_size, output_size)
+        super(NN, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.out = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.log_softmax(self.fc2(x), dim=1)
-        return x
+        output = self.fc1(x)
+        output = F.relu(output)
+        output = self.out(output)
+        return output
 
 
-transform = transforms.Compose(
-    [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+def model(x_data, y_data):
+    fc1w_prior = Normal(loc=torch.zeros_like(net.fc1.weight),
+                        scale=torch.ones_like(net.fc1.weight)).to_event(2)
+    fc1b_prior = Normal(loc=torch.zeros_like(net.fc1.bias),
+                        scale=torch.ones_like(net.fc1.bias)).to_event(1)
 
-trainset = datasets.MNIST('./data', download=True,
-                          train=True, transform=transform)
+    outw_prior = Normal(loc=torch.zeros_like(net.out.weight),
+                        scale=torch.ones_like(net.out.weight)).to_event(2)
+    outb_prior = Normal(loc=torch.zeros_like(net.out.bias),
+                        scale=torch.ones_like(net.out.bias)).to_event(1)
 
-trainloader = torch.utils.data.DataLoader(
-    trainset, batch_size=64, shuffle=True)
-
-testset = datasets.MNIST('./data', download=True,
-                         train=False, transform=transform)
-
-testloader = torch.utils.data.DataLoader(testset, batch_size=64, shuffle=False)
-
-
-def train_bnn(model, trainloader, epochs=50, lr=0.01):
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    model.train()
-    for epoch in range(epochs):
-        total_loss = 0
-        for images, labels in trainloader:
-            images = images.view(images.shape[0], -1)
-            optimizer.zero_grad()
-            output = model(images)
-            loss = F.nll_loss(output, labels)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-        print(f'Epoch {epoch+1}, Loss: {total_loss/len(trainloader)}')
+    priors = {'fc1.weight': fc1w_prior, 'fc1.bias': fc1b_prior,
+              'out.weight': outw_prior, 'out.bias': outb_prior}
+    lifted_module = pyro.random_module("module", net, priors)
+    lifted_reg_model = lifted_module()
+    lhat = log_softmax(lifted_reg_model(x_data))
+    pyro.sample("obs", Categorical(logits=lhat).to_event(1), obs=y_data)
 
 
-bnn_model = BNN(28*28, 256, 10)
-train_bnn(bnn_model, trainloader)
+def guide(x_data, y_data):
+    fc1w_mu = torch.randn_like(net.fc1.weight)
+    fc1w_sigma = torch.randn_like(net.fc1.weight)
+    fc1w_mu_param = pyro.param("fc1w_mu", fc1w_mu)
+    fc1w_sigma_param = softplus(pyro.param("fc1w_sigma", fc1w_sigma))
+    fc1w_prior = Normal(loc=fc1w_mu_param, scale=fc1w_sigma_param)
+    fc1b_mu = torch.randn_like(net.fc1.bias)
+    fc1b_sigma = torch.randn_like(net.fc1.bias)
+    fc1b_mu_param = pyro.param("fc1b_mu", fc1b_mu)
+    fc1b_sigma_param = softplus(pyro.param("fc1b_sigma", fc1b_sigma))
+    fc1b_prior = Normal(loc=fc1b_mu_param, scale=fc1b_sigma_param)
+    outw_mu = torch.randn_like(net.out.weight)
+    outw_sigma = torch.randn_like(net.out.weight)
+    outw_mu_param = pyro.param("outw_mu", outw_mu)
+    outw_sigma_param = softplus(pyro.param("outw_sigma", outw_sigma))
+    outw_prior = Normal(loc=outw_mu_param, scale=outw_sigma_param)
+    outb_mu = torch.randn_like(net.out.bias)
+    outb_sigma = torch.randn_like(net.out.bias)
+    outb_mu_param = pyro.param("outb_mu", outb_mu)
+    outb_sigma_param = softplus(pyro.param("outb_sigma", outb_sigma))
+    outb_prior = Normal(loc=outb_mu_param, scale=outb_sigma_param)
+    priors = {'fc1.weight': fc1w_prior.to_event(2), 'fc1.bias': fc1b_prior.to_event(
+        1), 'out.weight': outw_prior.to_event(2), 'out.bias': outb_prior.to_event(1)}
+
+    lifted_module = pyro.random_module("module", net, priors)
+
+    return lifted_module()
 
 
-def evaluate_bnn(model, testloader):
-    model.eval()
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for images, labels in testloader:
-            images = images.view(images.shape[0], -1)
-            outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-    print(f'Accuracy: {100 * correct / total}%')
+train_loader = torch.utils.data.DataLoader(
+    datasets.MNIST('../extra/datasets', train=True, download=True,
+                   transform=transforms.Compose([transforms.ToTensor(),])),
+    batch_size=128, shuffle=True)
+
+test_loader = torch.utils.data.DataLoader(
+    datasets.MNIST('../extra/datasets', train=False, transform=transforms.Compose([transforms.ToTensor(),])
+                   ),
+    batch_size=128, shuffle=True)
+
+net = NN(28*28, 1024, 10)
+optim = Adam({"lr": 0.01})
+log_softmax = nn.LogSoftmax(dim=1)
+softplus = torch.nn.Softplus()
+svi = SVI(model, guide, optim, loss=Trace_ELBO())
+num_iterations = 5
+loss = 0
+
+for j in range(num_iterations):
+    loss = 0
+    for batch_id, data in enumerate(train_loader):
+        loss += svi.step(data[0].view(-1, 28*28), data[1])
+    normalizer_train = len(train_loader.dataset)
+    total_epoch_loss_train = loss / normalizer_train
+    print("Epoch ", j, " Loss ", total_epoch_loss_train)
+
+num_samples = 10
 
 
-evaluate_bnn(bnn_model, testloader)
+def predict(x):
+    sampled_models = [guide(None, None) for _ in range(num_samples)]
+    yhats = [model(x).data for model in sampled_models]
+    mean = torch.mean(torch.stack(yhats), 0)
+    return np.argmax(mean.numpy(), axis=1)
+
+
+print('Prediction when network is forced to predict')
+correct = 0
+total = 0
+
+for j, data in enumerate(test_loader):
+    images, labels = data
+    predicted = predict(images.view(-1, 28*28))
+    total += labels.size(0)
+    predicted = torch.tensor(predicted)
+    correct += (predicted == labels).sum().item()
+print("accuracy: %d %%" % (100 * correct / total))
