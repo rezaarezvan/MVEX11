@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: 3.8
       - name: Install dependencies
-        run: pip install -e .
+        run: pip install -e '.[testing]'
       - name: Repo line count
         run: MAX_LINE_COUNT=5000 python sz.py
       - name: Run Pytest
