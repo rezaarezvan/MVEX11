@@ -12,8 +12,10 @@ import numpy as np
 
 class ViT:
     def __init__(self, num_classes=10, weights=ViT_B_16_Weights.DEFAULT, device=None):
+        print(torch.backends.mps.is_available())
         self.device = device if device else torch.device(
-            "cuda:0" if torch.cuda.is_available() else "cpu")
+            "mps" if torch.backends.mps.is_available() else "cuda:0" if torch.cuda.is_available() else "cpu")
+
         self.model = models.vit_b_16(weights=weights)
         self.model.heads[0] = nn.Linear(
             self.model.heads[0].in_features, num_classes)
