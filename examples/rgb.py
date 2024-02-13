@@ -1,59 +1,64 @@
 import torch
 import torch.nn.functional as F
 
-NUM_IMAGES = 10
+NUM_IMAGES = 1_000
 
 
 def softmax_attention(Q, K, V, d_model):
-    attention_scores = torch.matmul(Q, K.transpose(-2, -1))/torch.sqrt(torch.tensor(d_model, dtype=torch.float32))
+    """
+    Apply softmax attention and return attended values and attention weights.
+    """
+    attention_scores = torch.matmul(
+        Q, K.transpose(-2, -1)) / torch.sqrt(torch.tensor(d_model, dtype=torch.float32))
     attention_weights = F.softmax(attention_scores, dim=-1)
     return torch.matmul(attention_weights, V), attention_weights
 
 
+def find_max_yellow_pic(pics):
+    """
+    Find the index of the image with the maximum yellow content (red + green).
+    """
+    yellow_values = pics[:, 0] + pics[:, 1]
+    max_yellow_index = torch.argmax(yellow_values)
+    return max_yellow_index
+
+
 def find_max_red_pic(pics):
-    red_values = pics[:, 0]
-    max_red_index = torch.argmax(red_values)
+    """
+    Find the index of the image with the maximum red content.
+    """
+    max_red_index = torch.argmax(pics[:, 0])
     return max_red_index
 
 
+def simulate_attention_vs_direct_comparison(query=torch.tensor([1.0, 0.0, 0.0]), type="red"):
+    # Simulate RGB values for a large number of images.
+    R, G, B = torch.rand(NUM_IMAGES, 3).unbind(-1)
+    pics = torch.stack([R, G, B], dim=1)
+
+    # Define query
+    Q = query
+
+    # Compute attention
+    attended_values, attention_weights = softmax_attention(
+        Q, pics, pics, d_model=3)
+
+    # Determine the most correlating image according to both methods.
+    direct_max_index = find_max_yellow_pic(
+        pics) if type == "yellow" else find_max_red_pic(pics)
+    attention_max_index = torch.argmax(attention_weights)
+    return direct_max_index == attention_max_index
+
+
 def main():
-    # RGB channel values for num_images images
-    R = torch.rand(NUM_IMAGES)  # Red channel values
-    G = torch.rand(NUM_IMAGES)  # Green channel values
-    B = torch.rand(NUM_IMAGES)  # Blue channel values
+    query = torch.tensor([1.0, 0.0, 0.0])
+    TYPE = "red"
+    epochs = 10
+    correct_matches = sum(simulate_attention_vs_direct_comparison(query, TYPE)
+                          for _ in range(epochs))
 
-    pics = torch.stack([R, G, B], dim=1)  # Shape: [num_images, 3]
-
-    print(f"Image (RGB Values): \n{pics.numpy()}")
-    print(f"Image shape: {pics.numpy().shape}")
-
-    # Keys (K) and Values (V) are the same as the input image RGB values
-    K = V = pics
-    print(f"Keys (K): \n{K.numpy()}")
-    print(f"Values (V): \n{V.numpy()}")
-    print(f"Keys shape: {K.numpy().shape}")
-    print(f"Values shape: {V.numpy().shape}")
-
-    # Query (Q) is a single vector to find "red" in the image
-    Q = torch.tensor([[1.0, 0.0, 0.0]])
-    print(f"Query (Q): {Q.numpy()}")
-    print(f"Query shape: {Q.numpy().shape}")
-
-    # Dimensionality of the input image (3 for RGB)
-    d_model = 3
-
-    # Compute attention and obtain weights
-    attended_values, attention_weights = softmax_attention(Q, K, V, d_model)
-    print(f"Attended values: \n{attended_values.numpy()}")
-    print(f"Attention weights: \n{attention_weights.numpy()}")
-
-    # Find the image with the maximum red value
-    groundtruth_max_red_index = find_max_red_pic(pics)
-    print(f"Image with maximum red value: {groundtruth_max_red_index}")
-
-    # Image with most redness according to the attention weights
-    attention_max_red_index = torch.argmax(attention_weights)
-    print(f"Image with maximum red value according to attention: {attention_max_red_index}")
+    accuracy = correct_matches / epochs * 100
+    print(f"Accuracy: {accuracy:.2f}%")
 
 
 if __name__ == "__main__":
