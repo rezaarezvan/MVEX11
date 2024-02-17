@@ -31,7 +31,7 @@ def find_max_red_pic(pics):
     return max_red_index
 
 
-def simulate_attention_vs_direct_comparison(query=torch.tensor([1.0, 0.0, 0.0]), type="red"):
+def simulate_attention_vs_direct_comparison(query=torch.tensor([1.0, 0.0, 0.0]), TYPE="red"):
     # Simulate RGB values for a large number of images.
     R, G, B = torch.rand(NUM_IMAGES, 3).unbind(-1)
     pics = torch.stack([R, G, B], dim=1)
@@ -45,7 +45,7 @@ def simulate_attention_vs_direct_comparison(query=torch.tensor([1.0, 0.0, 0.0]),
 
     # Determine the most correlating image according to both methods.
     direct_max_index = find_max_yellow_pic(
-        pics) if type == "yellow" else find_max_red_pic(pics)
+        pics) if TYPE == "yellow" else find_max_red_pic(pics)
     attention_max_index = torch.argmax(attention_weights)
     return direct_max_index == attention_max_index
 
@@ -53,6 +53,8 @@ def simulate_attention_vs_direct_comparison(query=torch.tensor([1.0, 0.0, 0.0]),
 def main():
     query = torch.tensor([1.0, 0.0, 0.0])
     TYPE = "red"
+    if TYPE == "yellow":
+        query = torch.tensor([1.0, 1.0, 0.0])
     epochs = 10
     correct_matches = sum(simulate_attention_vs_direct_comparison(query, TYPE)
                           for _ in range(epochs))
