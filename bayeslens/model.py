@@ -30,8 +30,8 @@ class BayesianLinear(nn.Module):
         self.weight_mu    = nn.Parameter(torch.Tensor(out_features, in_features).normal_(0, 0.1))
         self.weight_sigma = nn.Parameter(torch.Tensor(out_features, in_features).normal_(0, 0.1))
 
-        self.bias_mu      = nn.Parameter(torch.Tensor(out_features).normal_(0, 0.1))
-        self.bias_sigma   = nn.Parameter(torch.Tensor(out_features).normal_(0, 0.1))
+        self.bias_mu    = nn.Parameter(torch.Tensor(out_features).normal_(0, 0.1))
+        self.bias_sigma = nn.Parameter(torch.Tensor(out_features).normal_(0, 0.1))
 
     def forward(self, x):
         weight = Normal(self.weight_mu, F.softplus(self.weight_sigma)).rsample()
@@ -67,19 +67,21 @@ class SelfAttention(nn.Module):
 
 
 class BayesLensModel(nn.Module):
-    def __init__(self):
+    def __init__(self, dropout_rate=0.5):
         super(BayesLensModel, self).__init__()
+        self.dropout = nn.Dropout(dropout_rate)
         self.feature_extractor = nn.Sequential(
             ConvBlock(3, 16),
             ConvBlock(16, 32),
             SelfAttention(32),
         )
-        self.flatten    = nn.Flatten()
+        self.flatten = nn.Flatten()
         self.classifier = BayesianLinear(32 * 8 * 8, 43)
 
     def forward(self, x):
         x = self.feature_extractor(x)
         x = self.flatten(x)
+        x = self.dropout(x)
         x = self.classifier(x)
         return x
 
@@ -118,7 +120,7 @@ def visualize_attention(original_image, attention_scores):
     plt.show()
 
 
-def train(model, train_loader, optimizer, criterion, epochs=10, device='cpu'):
+def train(model, train_loader, val_loader, optimizer, criterion, epochs=1, device='cpu'):
     model.train()
     for epoch in range(epochs):
         total_loss = 0
@@ -135,10 +137,11 @@ def train(model, train_loader, optimizer, criterion, epochs=10, device='cpu'):
             optimizer.step()
             total_loss += loss.item()
 
-        print(f'Epoch {epoch+1}, Loss: {total_loss/len(train_loader)}')
+        val_loss, val_acc = test(model, val_loader, criterion, device, mode='Validation')
+        print(f'Epoch {epoch+1}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_acc:.2f}%')
 
 
-def test(model, test_loader, criterion, device='cpu'):
+def test(model, test_loader, criterion, device='cpu', mode='Test'):
     model.eval()
     total_loss = 0
     correct    = 0
@@ -150,16 +153,22 @@ def test(model, test_loader, criterion, device='cpu'):
             total_loss += criterion(output, target).item()
             pred        = output.argmax(dim=1, keepdim=True)
             correct    += pred.eq(target.view_as(pred)).sum().item()
-    print(f'Test Loss: {total_loss/len(test_loader)}, Accuracy: {100. * correct / len(test_loader.dataset)}%')
+
+    loss = total_loss / len(test_loader)
+    acc  = 100. * correct / len(test_loader.dataset)
+    print(f'{mode} set: Average loss: {loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({acc:.2f}%)')
+
+    return loss, acc
 
 
 def main():
-    train_loader, test_loader = load_gtsrb(batch_size=32)
-    model = BayesLensModel()
+    train_loader, val_loader, test_loader = load_gtsrb()
+
+    model     = BayesLensModel()
     optimizer = torch.optim.Adam(model.parameters())
     criterion = nn.CrossEntropyLoss()
 
-    train(model, train_loader, optimizer, criterion, epochs=10)
+    train(model, train_loader, val_loader, optimizer, criterion, epochs=10)
     test(model, test_loader, criterion)
 
     # Visualize attention
