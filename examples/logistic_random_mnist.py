@@ -67,8 +67,8 @@ def test_model(model, test):
 
     test_loss /= len(test.dataset)
     acc = 100. * correct / len(test.dataset)
-    print(f'Average loss: {test_loss:.4f}, Accuracy: {
-          correct}/{len(test.dataset)} ({acc:.2f}%)')
+    print(
+        f'Average loss: {test_loss: .4f}, Accuracy: {correct}/{len(test.dataset)} ({acc: .2f} %)')
 
     return acc
 
