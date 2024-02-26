@@ -12,8 +12,8 @@ def load_data():
     testset = torchvision.datasets.MNIST(
         root='../extra/datasets', train=False, download=True, transform=transforms.ToTensor())
 
-    trainloader = DataLoader(trainset, batch_size=64, shuffle=True)
-    testloader = DataLoader(testset, batch_size=64, shuffle=False)
+    trainloader = DataLoader(trainset, batch_size=32, shuffle=True)
+    testloader = DataLoader(testset, batch_size=32, shuffle=False)
 
     return trainloader, testloader
 
@@ -24,7 +24,9 @@ class LogisticRegression(nn.Module):
         self.linear = nn.Linear(n_inputs, n_outputs, bias=False)
 
     def forward(self, x):
-        return self.linear(x)
+        x = self.linear(x)
+        x = nn.functional.softmax(x, dim=1)
+        return x
 
 
 def train_model(model, train, test, optimizer, epochs=3):
@@ -58,9 +60,19 @@ def test_model(model, test):
     test_loss = 0
     correct = 0
 
+    certainty = [0] * 10
+
     with torch.no_grad():
         for data, target in test:
             input = model(data.view(-1, 28*28))
+
+            for i, true_label in enumerate(target):
+                p = input[i, true_label].item()
+                idx = round(p * 10) - 1
+                if idx < 0:
+                    idx = 0
+                certainty[idx] += 1
+
             test_loss += loss(input, target).item()
             pred = input.argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
@@ -69,6 +81,7 @@ def test_model(model, test):
     acc = 100. * correct / len(test.dataset)
     print(
         f'Average loss: {test_loss: .4f}, Accuracy: {correct}/{len(test.dataset)} ({acc: .2f} %)')
+    print(f'Certainty: {certainty}')
 
     return acc
 
@@ -79,25 +92,17 @@ def main():
     train, test = load_data()
     model = LogisticRegression(n_inputs, n_outputs)
     optimizer = optim.Adam(model.parameters(), lr=0.01)
-    no_noise_acc = train_model(model, train, test, optimizer, epochs=5)
+    no_noise_acc = train_model(model, train, test, optimizer, epochs=1)
 
-    for param in model.parameters():
-        print(param)
-        print(param.shape)
-
-    sigma = 0.5
+    sigma = 0.1
     noise_weights = torch.rand(10, 28*28) * sigma
     for param in model.parameters():
         param.data += noise_weights
 
-    for param in model.parameters():
-        print(param)
-        print(param.shape)
-
     noise_acc = test_model(model, test)
 
-    print(f'Non-troll accuracy: {no_noise_acc}')
-    print(f'Troll accuracy: {noise_acc}')
+    print(f'Non-noise accuracy: {no_noise_acc}')
+    print(f'Noise accuracy: {noise_acc}')
     print(f'Accuracy difference: {no_noise_acc - noise_acc}')
 
 
