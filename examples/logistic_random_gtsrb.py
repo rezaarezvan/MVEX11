@@ -8,10 +8,15 @@ import torch.optim as optim
 
 
 def load_data():
-    trainset = torchvision.datasets.MNIST(
-        root='../extra/datasets', train=True, download=True, transform=transforms.ToTensor())
-    testset = torchvision.datasets.MNIST(
-        root='../extra/datasets', train=False, download=True, transform=transforms.ToTensor())
+    trans = transforms.Compose([
+        transforms.Resize((28, 28)),
+        transforms.ToTensor()
+    ])
+
+    trainset = torchvision.datasets.GTSRB(
+        root='../extra/datasets', split='train', download=True, transform=trans)
+    testset = torchvision.datasets.GTSRB(
+        root='../extra/datasets', split='test', download=True, transform=trans)
 
     trainloader = DataLoader(trainset, batch_size=32, shuffle=True)
     testloader = DataLoader(testset, batch_size=32, shuffle=False)
@@ -37,7 +42,7 @@ def train_model(model, train, test, optimizer, epochs=3):
         model.train()
         for i, (data, target) in enumerate(train):
             optimizer.zero_grad()
-            input = model(data.view(-1, 28*28))
+            input = model(data.view(-1, 28*28*3))
             output = loss(input, target)
             output.backward()
             optimizer.step()
@@ -45,9 +50,9 @@ def train_model(model, train, test, optimizer, epochs=3):
                 print(f'Epoch {epoch+1}, Batch {i}, Loss: {output.item()}')
 
         print(f'Epoch {epoch+1} completed')
-        # print('Testing model...')
-        # acc = test_model(model, test)
-        # print('')
+        print('Testing model...')
+        acc = test_model(model, test)
+        print('')
 
     return acc
 
@@ -81,7 +86,7 @@ def test_model(model, test):
 
     with torch.no_grad():
         for data, target in test:
-            input = model(data.view(-1, 28*28))
+            input = model(data.view(-1, 28*28*3))
             prob = nn.functional.softmax(input, dim=1)
 
             pred = input.argmax(dim=1, keepdim=True)
@@ -112,16 +117,15 @@ def test_model(model, test):
 
 
 def main():
-    n_inputs = 28 * 28
-    n_outputs = 10
+    n_inputs = 3 * 28 * 28
+    n_outputs = 43
     train, test = load_data()
     model = LogisticRegression(n_inputs, n_outputs)
     optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
-    train_model(model, train, test, optimizer, epochs=1)
-    no_noise_acc = test_model(model, test)
+    no_noise_acc = train_model(model, train, test, optimizer, epochs=1)
 
-    sigma = 5
-    noise_weights = torch.rand(10, 28*28) * sigma
+    sigma = 0.5
+    noise_weights = torch.rand(43, 28*28*3) * sigma
     for param in model.parameters():
         param.data += noise_weights
 
