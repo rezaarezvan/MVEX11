@@ -71,12 +71,12 @@ class BayesLensModel(nn.Module):
         super(BayesLensModel, self).__init__()
         self.dropout = nn.Dropout(dropout_rate)
         self.feature_extractor = nn.Sequential(
-            ConvBlock(3, 16),
-            ConvBlock(16, 32),
-            SelfAttention(32),
+            ConvBlock(3, 32),
+            ConvBlock(32, 64),
+            SelfAttention(64),
         )
         self.flatten = nn.Flatten()
-        self.classifier = BayesianLinear(32 * 8 * 8, 43)
+        self.classifier = BayesianLinear(4096, 43)
 
     def forward(self, x):
         x = self.feature_extractor(x)
