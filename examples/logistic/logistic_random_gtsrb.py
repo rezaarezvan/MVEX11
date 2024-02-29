@@ -14,9 +14,9 @@ def load_data():
     ])
 
     trainset = torchvision.datasets.GTSRB(
-        root='../extra/datasets', split='train', download=True, transform=trans)
+        root='../../extra/datasets', split='train', download=True, transform=trans)
     testset = torchvision.datasets.GTSRB(
-        root='../extra/datasets', split='test', download=True, transform=trans)
+        root='../../extra/datasets', split='test', download=True, transform=trans)
 
     trainloader = DataLoader(trainset, batch_size=32, shuffle=True)
     testloader = DataLoader(testset, batch_size=32, shuffle=False)

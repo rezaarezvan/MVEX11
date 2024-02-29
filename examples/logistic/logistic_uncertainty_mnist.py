@@ -11,9 +11,9 @@ torch.manual_seed(0)
 
 def load_data():
     trainset = torchvision.datasets.MNIST(
-        root='../extra/datasets', train=True, download=True, transform=transforms.ToTensor())
+        root='../../extra/datasets', train=True, download=True, transform=transforms.ToTensor())
     testset = torchvision.datasets.MNIST(
-        root='../extra/datasets', train=False, download=True, transform=transforms.ToTensor())
+        root='../../extra/datasets', train=False, download=True, transform=transforms.ToTensor())
 
     trainloader = DataLoader(trainset, batch_size=32, shuffle=True)
     testloader = DataLoader(testset, batch_size=32, shuffle=False)
