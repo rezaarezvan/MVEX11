@@ -35,7 +35,6 @@ class LogisticRegression(nn.Module):
 
 def train_model(model, train, test, optimizer, epochs=3):
     loss = nn.CrossEntropyLoss()
-    acc = 0
 
     for epoch in range(epochs):
         model.train()
@@ -49,11 +48,9 @@ def train_model(model, train, test, optimizer, epochs=3):
                 print(f'Epoch {epoch+1}, Batch {i}, Loss: {output.item()}')
 
         print(f'Epoch {epoch+1} completed')
-        # print('Testing model...')
-        # acc = test_model(model, test)
-        # print('')
-
-    return acc
+        print('Testing model...')
+        test_model(model, test)
+        print('')
 
 
 def test_model(model, test):
@@ -76,8 +73,6 @@ def test_model(model, test):
     acc = 100. * correct / len(test.dataset)
     print(
         f'Average loss: {test_loss: .4f}, Accuracy: {correct}/{len(test.dataset)} ({acc: .2f} %)')
-
-    return acc
 
 
 def save_model_parameters(model):
@@ -103,41 +98,46 @@ def calculate_entropy(x):
 
 
 @torch.no_grad()
-def test_model_noise(model, test, sigma, iterations=10, num_pics=100):
+def test_model_noise(model, test_loader, sigma, iterations=10):
     model.eval()
     ent_prob = []
 
-    for data, _ in test:
+    for data, target in test_loader:
         batch_size = data.size(0)
-        predictions = torch.zeros(iterations, batch_size, 10)
-        entropy_prob = torch.zeros(32)
 
-        for i in range(iterations):
+        entropy_cum = torch.zeros(batch_size)
+        correct_prob_cum = torch.zeros(batch_size)
+
+        for _ in range(iterations):
             original_weights = save_model_parameters(model)
             add_noise(model, sigma)
 
-            input = model(data.view(-1, 28*28))
-            prob = nn.functional.softmax(input, dim=1)
+            outputs = model(data.view(-1, 28*28))
+            probs = nn.functional.softmax(outputs, dim=1)
 
-            predictions[i] = prob
-            entropy_prob = calculate_entropy(prob)
+            for j in range(batch_size):
+                entropy_cum[j] += Categorical(probs=probs[j]).entropy()
+                correct_prob_cum[j] += probs[j, target[j]]
 
             restore_model_parameters(model, original_weights)
 
-        ent_prob.append((entropy_prob.mean().item(),
-                        predictions.mean().item()))
+        entropy_cum /= iterations
+        correct_prob_cum /= iterations
+
+        for i in range(batch_size):
+            ent_prob.append(
+                (entropy_cum[i].item(), correct_prob_cum[i].item()))
 
     return ent_prob
 
 
 def plot_entropy_prob(ent_prob):
     entropy, probability = zip(*ent_prob)
-
     plt.figure(figsize=(10, 6))
     plt.scatter(probability, entropy, alpha=0.5)
-    plt.xlabel('Probability')
+    plt.xlabel('Correct Probability')
     plt.ylabel('Entropy')
-    plt.title('Entropy to Probability')
+    plt.title('Entropy vs Correct Probability')
     plt.grid()
     plt.ylim(min(entropy)-0.1, max(entropy)+0.1)
     plt.xlim(-0.5, 1.5)
@@ -151,8 +151,7 @@ def main():
     model = LogisticRegression(n_inputs, n_outputs)
     optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
     train_model(model, train, test, optimizer, epochs=1)
-    plot_entropy_prob(test_model_noise(
-        model, test, 0.1, iterations=1, num_pics=np.inf))
+    plot_entropy_prob(test_model_noise(model, test, sigma=0.1, iterations=10))
 
 
 if __name__ == '__main__':
