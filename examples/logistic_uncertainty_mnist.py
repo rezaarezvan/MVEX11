@@ -10,6 +10,7 @@ import numpy as np
 
 torch.manual_seed(0)
 
+
 def load_data():
     trainset = torchvision.datasets.MNIST(
         root='../extra/datasets', train=True, download=True, transform=transforms.ToTensor())
@@ -48,9 +49,9 @@ def train_model(model, train, test, optimizer, epochs=3):
                 print(f'Epoch {epoch+1}, Batch {i}, Loss: {output.item()}')
 
         print(f'Epoch {epoch+1} completed')
-        # print('Testing model...')
-        # acc = test_model(model, test)
-        # print('')
+        print('Testing model...')
+        acc = test_model(model, test)
+        print('')
 
     return acc
 
@@ -113,54 +114,64 @@ def test_model(model, test):
 
     return acc
 
-def test_model_noise(model, test, sigma):
+
+def save_model_parameters(model):
+    original_params = [param.clone() for param in model.parameters()]
+    return original_params
+
+
+@torch.no_grad
+def restore_model_parameters(model, original_params):
+    for param, original in zip(model.parameters(), original_params):
+        param.copy_(original)
+
+
+@torch.no_grad
+def add_noise(model, sigma):
+    for param in model.parameters():
+        param += torch.randn_like(param) * sigma
+    return model
+
+
+def calculate_entropy(predictions):
+    return Categorical(probs=torch.bincount(predictions)).entropy()
+
+
+@torch.no_grad
+def test_model_noise(model, test, sigma, iterations=100, num_pics=100):
     model.eval()
     # save (entropy, probability) for each picture
     ent_prob = []
-    num_pics = 100
-    pics = 0
-    exit_loop = False
-    with torch.no_grad():
-        # Get a batch of pictures
-        for data, target in test:
-            # exit loop
-            if exit_loop:
+    for data, target in test:
+        for x, y in zip(data, target):
+            if len(ent_prob) > num_pics:
                 break
-            # Loop through the pictures
-            for x,y in zip(data, target):
-                # Exit loop if we have done 100 pics
-                if pics > num_pics:
-                    exit_loop = True
-                    break
-                pics += 1
-                datapoint = (x, y)
-                predictions = []
-                entropy_probs = []
-                # Loop x amount of times per picture
-                for _ in range(100):
-                    # Add noise to the weights
-                    for param in model.parameters():
-                        param.data += torch.randn(param.size()) * sigma
+            # Exit loop if we have done 100 pics
+            predictions = []
+            entropy_probs = []
+            # Loop x amount of times per picture
+            for _ in range(iterations):
+                original_weights = save_model_parameters(model)
+                add_noise(model, sigma)
+                # Add prediction
+                input = model(x.view(-1, 28*28))
+                pred = input.argmax(dim=1, keepdim=True)
 
-                    # Add prediction
-                    input = model(datapoint[0].view(-1, 28*28))
-                    pred = input.argmax(dim=1, keepdim=True)
+                entropy_probs.append(pred)
+                predictions.append(pred[0].item())
 
-                    # append the prediction probability to entropy_probs
-                    predictions.append(pred[0].item())
-                    entropy_probs.append(nn.functional.softmax(input, dim=1))
+                restore_model_parameters(model, original_weights)
 
-                # Calculate the probability given the amount of predictions
-                entropy_tensor = torch.stack(entropy_probs).sum(dim=0)
-                entropy2 = float(Categorical(probs=entropy_tensor).entropy())
-                probability = len([x for x in predictions if x == datapoint[1].item()])/len(predictions)
-                print(f"Target: {datapoint[1]}\nProbability: {probability}\nEntropy: {entropy2}\n")
-                ent_prob.append((entropy2, probability))
+            entropy2 = calculate_entropy(torch.tensor(predictions))
+            probability = len(
+                [x for x in predictions if x == y.item()])/len(predictions)
+            # print(f"Target: {y}\nProbability: {probability}\nEntropy: {entropy2}\n")
+            ent_prob.append((entropy2, probability))
     return ent_prob
 
+
 def plot_entropy_prob(ent_prob):
-    entropy = [x[0] for x in ent_prob]
-    probability = [x[1] for x in ent_prob]
+    entropy, probability = zip(*ent_prob)
 
     plt.figure(figsize=(10, 6))
     plt.scatter(probability, entropy, alpha=0.5)
@@ -169,7 +180,7 @@ def plot_entropy_prob(ent_prob):
     plt.title('Entropy to Probability')
     plt.grid()
     plt.ylim(min(entropy)-0.1, max(entropy)+0.1)
-    plt.xlim(-0.5,1.5)
+    plt.xlim(-0.5, 1.5)
     plt.show()
 
 
@@ -180,19 +191,20 @@ def main():
     model = LogisticRegression(n_inputs, n_outputs)
     optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
     train_model(model, train, test, optimizer, epochs=1)
-    plot_entropy_prob(test_model_noise(model, test, 1))
-    no_noise_acc = test_model(model, test)
+    plot_entropy_prob(test_model_noise(
+        model, test, 0.1, iterations=100, num_pics=np.inf))
+    # no_noise_acc = test_model(model, test)
 
-    sigma = 5
-    noise_weights = torch.rand(10, 28*28) * sigma
-    for param in model.parameters():
-        param.data += noise_weights
+    # sigma = 5
+    # noise_weights = torch.rand(10, 28*28) * sigma
+    # for param in model.parameters():
+    #    param.data += noise_weights
 
-    noise_acc = test_model(model, test)
+    # noise_acc = test_model(model, test)
 
-    print(f'Non-noise accuracy: {no_noise_acc}')
-    print(f'Noise accuracy: {noise_acc}')
-    print(f'Accuracy difference: {no_noise_acc - noise_acc}')
+    # print(f'Non-noise accuracy: {no_noise_acc}')
+    # print(f'Noise accuracy: {noise_acc}')
+    # print(f'Accuracy difference: {no_noise_acc - noise_acc}')
 
 
 if __name__ == '__main__':
