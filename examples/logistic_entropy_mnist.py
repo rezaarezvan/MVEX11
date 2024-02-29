@@ -33,7 +33,8 @@ class LogisticRegression(nn.Module):
         return x
 
 
-def train_model(model, train, test, optimizer, loss, epochs=1):
+def train_model(model, train, test, optimizer, epochs=3):
+    loss = nn.CrossEntropyLoss()
     acc = 0
 
     for epoch in range(epochs):
@@ -48,14 +49,13 @@ def train_model(model, train, test, optimizer, loss, epochs=1):
                 print(f'Epoch {epoch+1}, Batch {i}, Loss: {output.item()}')
 
         print(f'Epoch {epoch+1} completed')
-        print('Testing model...')
-        acc = test_model(model, test)
-        print('')
+        # print('Testing model...')
+        # acc = test_model(model, test)
+        # print('')
 
     return acc
 
 
-@torch.no_grad
 def test_model(model, test):
     loss = nn.CrossEntropyLoss()
 
@@ -64,12 +64,13 @@ def test_model(model, test):
     test_loss = 0
     correct = 0
 
-    for data, target in test:
-        input = model(data.view(-1, 28*28))
-        pred = input.argmax(dim=1, keepdim=True)
+    with torch.no_grad():
+        for data, target in test:
+            input = model(data.view(-1, 28*28))
+            pred = input.argmax(dim=1, keepdim=True)
 
-        test_loss += loss(input, target).item()
-        correct += pred.eq(target.view_as(pred)).sum().item()
+            test_loss += loss(input, target).item()
+            correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test.dataset)
     acc = 100. * correct / len(test.dataset)
@@ -84,13 +85,13 @@ def save_model_parameters(model):
     return original_params
 
 
-@torch.no_grad
+@torch.no_grad()
 def restore_model_parameters(model, original_params):
     for param, original in zip(model.parameters(), original_params):
         param.copy_(original)
 
 
-@torch.no_grad
+@torch.no_grad()
 def add_noise(model, sigma):
     for param in model.parameters():
         param += torch.randn_like(param) * sigma
@@ -98,50 +99,34 @@ def add_noise(model, sigma):
 
 
 def calculate_entropy(predictions):
-    print(f'Shape of predictions: {predictions.shape}')
-    print(f'Predictions: {predictions.T}')
-
-    # For each row, calculate the entropy
-    entropy = []
-    for row in predictions:
-        print(f'Row: {row}')
-        print(f'Row shape: {row.shape}')
-        entropy.append(Categorical(probs=row).entropy())
-
-    print(f'Entropy: {entropy}')
+    return Categorical(probs=torch.bincount(predictions)).entropy()
 
 
-@ torch.no_grad
-def test_model_noise(model, test, sigma, iterations=100):
+@torch.no_grad()
+def test_model_noise(model, test, sigma, iterations=10, num_pics=100):
     model.eval()
     ent_prob = []
 
     for data, target in test:
-        # predictions = torch.tensor([], dtype=torch.int32)
-        predictions = []
-        entropy_probs = []
+        for x, y in zip(data, target):
+            if len(ent_prob) > num_pics:
+                break
 
-        for _ in range(iterations):
-            original_weights = save_model_parameters(model)
-            add_noise(model, sigma)
+            predictions = torch.zeros(iterations, dtype=torch.int32)
+            for _ in range(iterations):
+                original_weights = save_model_parameters(model)
+                add_noise(model, sigma)
 
-            input = model(data.flatten(start_dim=1))
-            # input tensor of shape (32, 10)
-            pred = input.argmax(dim=1, keepdim=True)
-            # pred tensor of shape (32, 1)
+                input = model(x.view(-1, 28*28))
+                pred = input.argmax(dim=1, keepdim=True)
+                predictions[_] = pred.item()
 
-            entropy_probs.append(pred)
-            predictions.append(pred)
-            # predictions = torch.cat((predictions, pred), dim=0)
+                restore_model_parameters(model, original_weights)
 
-            restore_model_parameters(model, original_weights)
-
-        entropy2 = calculate_entropy(torch.stack(predictions))
-        print(f'Entropy2: {entropy2}')
-        print(f'Shape of entropy2 as tensor: {entropy2.shape}')
-        probability = (torch.tensor(entropy2).eq(
-            target.view_as(entropy2)).sum().item()) / len(target)
-        ent_prob.append((entropy2, probability))
+            entropy = calculate_entropy(predictions)
+            probability = torch.bincount(predictions, minlength=10)[
+                y.item()]/len(predictions)
+            ent_prob.append((entropy, probability))
     return ent_prob
 
 
@@ -163,13 +148,11 @@ def main():
     n_inputs = 28 * 28
     n_outputs = 10
     train, test = load_data()
-
     model = LogisticRegression(n_inputs, n_outputs)
     optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
-    criterion = nn.CrossEntropyLoss()
-
-    train_model(model, train, test, optimizer, criterion, epochs=1)
-    plot_entropy_prob(test_model_noise(model, test, 0, iterations=100))
+    train_model(model, train, test, optimizer, epochs=1)
+    plot_entropy_prob(test_model_noise(
+        model, test, 0.1, iterations=10, num_pics=np.inf))
 
 
 if __name__ == '__main__':
