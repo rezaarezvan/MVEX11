@@ -4,13 +4,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from torch.distributions import Normal
-from data import load_gtsrb
+from gtsrb import load_gtsrb
 
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1):
         super(ConvBlock, self).__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
+        self.conv = nn.Conv2d(in_channels, out_channels,
+                              kernel_size, stride, padding)
         self.relu = nn.ReLU()
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
@@ -24,18 +25,22 @@ class ConvBlock(nn.Module):
 class BayesianLinear(nn.Module):
     def __init__(self, in_features, out_features):
         super(BayesianLinear, self).__init__()
-        self.in_features  = in_features
+        self.in_features = in_features
         self.out_features = out_features
 
-        self.weight_mu    = nn.Parameter(torch.Tensor(out_features, in_features).normal_(0, 0.1))
-        self.weight_sigma = nn.Parameter(torch.Tensor(out_features, in_features).normal_(0, 0.1))
+        self.weight_mu = nn.Parameter(torch.Tensor(
+            out_features, in_features).normal_(0, 0.1))
+        self.weight_sigma = nn.Parameter(torch.Tensor(
+            out_features, in_features).normal_(0, 0.1))
 
-        self.bias_mu    = nn.Parameter(torch.Tensor(out_features).normal_(0, 0.1))
-        self.bias_sigma = nn.Parameter(torch.Tensor(out_features).normal_(0, 0.1))
+        self.bias_mu = nn.Parameter(torch.Tensor(out_features).normal_(0, 0.1))
+        self.bias_sigma = nn.Parameter(
+            torch.Tensor(out_features).normal_(0, 0.1))
 
     def forward(self, x):
-        weight = Normal(self.weight_mu, F.softplus(self.weight_sigma)).rsample()
-        bias   = Normal(self.bias_mu, F.softplus(self.bias_sigma)).rsample()
+        weight = Normal(self.weight_mu, F.softplus(
+            self.weight_sigma)).rsample()
+        bias = Normal(self.bias_mu, F.softplus(self.bias_sigma)).rsample()
         return F.linear(x, weight, bias)
 
 
@@ -43,15 +48,16 @@ class SelfAttention(nn.Module):
     def __init__(self, in_dim):
         super(SelfAttention, self).__init__()
         self.query_conv = nn.Conv2d(in_dim, in_dim // 8, kernel_size=1)
-        self.key_conv   = nn.Conv2d(in_dim, in_dim // 8, kernel_size=1)
+        self.key_conv = nn.Conv2d(in_dim, in_dim // 8, kernel_size=1)
         self.value_conv = nn.Conv2d(in_dim, in_dim, kernel_size=1)
 
-        self.softmax        = nn.Softmax(dim=-2)
+        self.softmax = nn.Softmax(dim=-2)
         self.last_attention = None
 
     def forward(self, x):
-        query = self.query_conv(x).view(x.shape[0], -1, x.shape[2]*x.shape[3]).permute(0, 2, 1)
-        key   = self.key_conv(x).view(x.shape[0], -1, x.shape[2]*x.shape[3])
+        query = self.query_conv(x).view(
+            x.shape[0], -1, x.shape[2]*x.shape[3]).permute(0, 2, 1)
+        key = self.key_conv(x).view(x.shape[0], -1, x.shape[2]*x.shape[3])
         value = self.value_conv(x).view(x.shape[0], -1, x.shape[2]*x.shape[3])
 
         attention = torch.bmm(query, key)
@@ -67,16 +73,17 @@ class SelfAttention(nn.Module):
 
 
 class BayesLensModel(nn.Module):
-    def __init__(self, dropout_rate=0.5):
+    def __init__(self, num_classes, dropout_rate=0.5):
         super(BayesLensModel, self).__init__()
         self.dropout = nn.Dropout(dropout_rate)
+        # Input shape: 3x256x256
         self.feature_extractor = nn.Sequential(
-            ConvBlock(3, 32),
-            ConvBlock(32, 64),
-            SelfAttention(64),
+            ConvBlock(3, 16),
+            ConvBlock(16, 32),
+            SelfAttention(32),
         )
         self.flatten = nn.Flatten()
-        self.classifier = BayesianLinear(4096, 43)
+        self.classifier = BayesianLinear(32*64*64, num_classes)
 
     def forward(self, x):
         x = self.feature_extractor(x)
@@ -125,6 +132,7 @@ def train(model, train_loader, val_loader, optimizer, criterion, epochs=1, devic
     for epoch in range(epochs):
         total_loss = 0
         for data, target in train_loader:
+            print(data.shape)
             data, target = data.to(device), target.to(device)
 
             # Forward pass
@@ -136,26 +144,29 @@ def train(model, train_loader, val_loader, optimizer, criterion, epochs=1, devic
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
+            print(f'Loss: {loss.item()}')
 
-        val_loss, val_acc = test(model, val_loader, criterion, device, mode='Validation')
-        print(f'Epoch {epoch+1}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_acc:.2f}%')
+        val_loss, val_acc = test(
+            model, val_loader, criterion, device, mode='Validation')
+        print(
+            f'Epoch {epoch+1}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_acc:.2f}%')
 
 
 def test(model, test_loader, criterion, device='cpu', mode='Test'):
     model.eval()
     total_loss = 0
-    correct    = 0
+    correct = 0
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
 
-            output      = model(data)
+            output = model(data)
             total_loss += criterion(output, target).item()
-            pred        = output.argmax(dim=1, keepdim=True)
-            correct    += pred.eq(target.view_as(pred)).sum().item()
+            pred = output.argmax(dim=1, keepdim=True)
+            correct += pred.eq(target.view_as(pred)).sum().item()
 
     loss = total_loss / len(test_loader)
-    acc  = 100. * correct / len(test_loader.dataset)
+    acc = 100. * correct / len(test_loader.dataset)
     print(f'{mode} set: Average loss: {loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({acc:.2f}%)')
 
     return loss, acc
@@ -163,8 +174,7 @@ def test(model, test_loader, criterion, device='cpu', mode='Test'):
 
 def main():
     train_loader, val_loader, test_loader = load_gtsrb()
-
-    model     = BayesLensModel()
+    model = BayesLensModel(43)
     optimizer = torch.optim.Adam(model.parameters())
     criterion = nn.CrossEntropyLoss()
 
