@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from torch.distributions import Normal
 from soda import load_data
 
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1):
@@ -126,59 +128,60 @@ def visualize_attention(original_image, attention_scores):
     plt.show()
 
 
-def train(model, train_loader, val_loader, optimizer, criterion, epochs=1, device='cpu'):
-    model.train()
-    for epoch in range(epochs):
-        total_loss = 0
-        for data, target in train_loader:
-            data, target = data.to(device), target.to(device)
+def train_model(model, train, test, optimizer, criterion, num_epochs=40):
+    model.to(DEVICE)
+
+    for epoch in range(num_epochs):
+        model.train()
+        for i, (images, labels) in enumerate(train):
+            images, labels = images.to(DEVICE), labels.to(DEVICE)
 
             # Forward pass
-            optimizer.zero_grad()
-            output = model(data)
-            loss = criterion(output, target)
+            outputs = model(images)
+            loss = criterion(outputs, labels)
 
-            # Backward pass
+            # Backward and optimize
+            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            total_loss += loss.item()
 
-        val_loss, val_acc = test(
-            model, val_loader, criterion, device, mode='Validation')
-        print(
-            f'Epoch {epoch+1}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_acc:.2f}%')
+            if (i+1) % 10 == 0:
+                print(
+                    f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(train)}], Loss: {loss.item():.4f}')
+
+        evaluate_model(model, test)
+        print()
 
 
-def test(model, test_loader, criterion, device='cpu', mode='Test'):
+def evaluate_model(model, test, mode='validation'):
     model.eval()
-    total_loss = 0
+
     correct = 0
+    total = 0
+
     with torch.no_grad():
-        for data, target in test_loader:
-            data, target = data.to(device), target.to(device)
+        for images, labels in test:
+            images, labels = images.to(DEVICE), labels.to(DEVICE)
 
-            output = model(data)
-            total_loss += criterion(output, target).item()
-            pred = output.argmax(dim=1, keepdim=True)
-            correct += pred.eq(target.view_as(pred)).sum().item()
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
 
-    loss = total_loss / len(test_loader)
-    acc = 100. * correct / len(test_loader.dataset)
-    print(f'{mode} set: Average loss: {loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({acc:.2f}%)')
-
-    return loss, acc
+    accuracy = 100 * correct / total
+    print(f'{mode.capitalize()} accuracy of the model: {accuracy} %')
 
 
 def main():
     dataset_path = '../extra/datasets/labeled_trainval'
-    train_loader, val_loader = load_data(dataset_path)
+    train, val = load_data(dataset_path, batch_size=16)
 
-    model = BayesLensModel(6)
-    optimizer = torch.optim.Adam(model.parameters())
+    model = BayesLensModel(num_classes=6)
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=0.001, weight_decay=1e-5)
     criterion = nn.CrossEntropyLoss()
 
-    train(model, train_loader, val_loader, optimizer, criterion, epochs=1)
-    test(model, val_loader, criterion)
+    train_model(model, train, val, optimizer, criterion)
 
 
 if __name__ == "__main__":

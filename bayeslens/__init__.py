@@ -1,1 +1,1 @@
-from bayeslens.model import B3Conv3FC
+from bayeslens.soda_model import BayesLensModel

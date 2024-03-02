@@ -64,7 +64,7 @@ def load_categories(annotation_path):
     return category_mapping
 
 
-def load_data(dataset_path):
+def load_data(dataset_path, batch_size=32):
     transform = transforms.Compose([
         transforms.Resize((256, 256)),
         transforms.ToTensor(),
@@ -75,7 +75,7 @@ def load_data(dataset_path):
     val = SSLADDataset(
         root_dir=dataset_path, split='val', transform=transform)
 
-    train = DataLoader(train, batch_size=32, shuffle=True)
-    val = DataLoader(val, batch_size=32, shuffle=False)
+    train = DataLoader(train, batch_size=batch_size, shuffle=True)
+    val = DataLoader(val, batch_size=batch_size, shuffle=False)
 
     return train, val
