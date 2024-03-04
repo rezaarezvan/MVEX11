@@ -134,7 +134,7 @@ def test_model_noise(model, test, sigma, iterations=10):
 def plot_entropy_prob(ent_prob):
     entropy, probability = zip(*ent_prob)
     plt.figure(figsize=(10, 6))
-    plt.scatter(probability, entropy, alpha=0.5)
+    plt.scatter(probability, entropy, alpha=0.5, s=1)
     plt.xlabel('Correct Probability')
     plt.ylabel('Entropy')
     plt.title('Entropy vs Correct Probability')
@@ -143,6 +143,37 @@ def plot_entropy_prob(ent_prob):
     plt.xlim(-0.5, 1.5)
     plt.show()
 
+def prob_ent_window_plot(ent_prob):
+
+    value_list = []
+    entropy, probability = zip(*ent_prob)
+    lower_off = 0.0
+    higher_off = 0.25
+    for ent_range in range(8):
+        limited_list = list()
+        for entropy in ent_prob:
+            if higher_off >= entropy[0] >= lower_off:
+                limited_list.append(entropy)
+        sum = 0
+        print(ent_range)
+        for prob in limited_list:
+            sum += prob[1]
+        value = sum / len(limited_list)
+        print(value)
+        value_list.append(value)
+        print("New iteration:")
+        lower_off += 0.25
+        higher_off += 0.25
+
+
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(value_list, marker='o')
+    plt.xlabel('Correct Probability')
+    plt.ylabel('Entropy')
+    plt.title('Entropy vs Correct Probability')
+    plt.grid()
+    plt.show()
 
 def main():
     n_inputs = 28 * 28
