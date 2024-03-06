@@ -6,10 +6,11 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from torch.distributions import Categorical
 import torch.optim as optim
+import numpy as np
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
+torch.manual_seed(0)
+np.random.seed(0)
 def load_data():
     train = torchvision.datasets.MNIST(
         root='../../extra/datasets', train=True, download=True, transform=transforms.ToTensor())
@@ -55,8 +56,8 @@ def train_model(model, train, test, optimizer, criterion, epochs=3):
 
         print(f'Epoch {epoch+1} completed')
         print('Testing model...')
-        test_model(model, test)
-        print()
+        acc = test_model(model, test)
+        print(acc)
 
 
 def test_model(model, test):
@@ -73,7 +74,7 @@ def test_model(model, test):
 
     acc = 100. * correct / len(test.dataset)
     print(f'Accuracy: {correct}/{len(test.dataset)} ({acc: .2f} %)')
-
+    return acc
 
 def save_model_parameters(model):
     original_params = [param.clone() for param in model.parameters()]
@@ -94,15 +95,16 @@ def add_noise(model, sigma):
 
 
 def calculate_entropy(predictions):
-    return Categorical(probs=torch.bincount(predictions)).entropy()
-
+    value_counts = torch.bincount(predictions) / len(predictions)
+    entropy = -np.sum([p * np.log10(p) for p in value_counts if p > 0])
+    return entropy
 
 @torch.no_grad()
-def test_model_noise(model, test, sigma, iterations=10):
+def test_model_noise(model, test, sigma, iterations):
     model.eval()
     entropy_probability = []
 
-    print('Testing model with noise...')
+    print(f'Testing model with sigma = {sigma}, iterations = {iterations}')
 
     for batch, (images, labels) in enumerate(test):
         for image, label in zip(images, labels):
@@ -131,17 +133,17 @@ def test_model_noise(model, test, sigma, iterations=10):
     return entropy_probability
 
 
-def plot_entropy_prob(ent_prob):
+def plot_entropy_prob(ent_prob, sigma, acc, iterations):
     entropy, probability = zip(*ent_prob)
 
     plt.figure(figsize=(10, 6))
-    plt.scatter(probability, entropy, alpha=0.5)
+    plt.scatter(probability, entropy, alpha=1)
     plt.xlabel('Probability')
     plt.ylabel('Entropy')
-    plt.title('Entropy to Probability')
+    plt.title(f'Entropy to Probability (sigma={sigma}, iterations={iterations}, {acc}%)')
     plt.grid()
-    plt.ylim(min(entropy)-0.1, max(entropy)+0.1)
-    plt.xlim(-0.5, 1.5)
+    plt.ylim(-0.1, np.log(10) + 0.1)
+    plt.xlim(-0.2, 1.2)
     plt.show()
 
 
@@ -152,8 +154,11 @@ def main():
     model = LogisticRegression(n_inputs, n_outputs)
     optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
     criterion = nn.CrossEntropyLoss()
-    train_model(model, train, test, optimizer, criterion, epochs=3)
-    plot_entropy_prob(test_model_noise(model, test, sigma=0.1, iterations=10))
+    train_model(model, train, test, optimizer, criterion, epochs=1)
+    accuracy = test_model(model, test)
+    iterations = 10
+    sigma = 0.5
+    plot_entropy_prob(test_model_noise(model, test, sigma=sigma, iterations=iterations), sigma, accuracy,iterations)
 
 
 if __name__ == '__main__':
