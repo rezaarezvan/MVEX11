@@ -11,6 +11,8 @@ import numpy as np
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.manual_seed(0)
 np.random.seed(0)
+
+
 def load_data():
     train = torchvision.datasets.MNIST(
         root='../../extra/datasets', train=True, download=True, transform=transforms.ToTensor())
@@ -50,11 +52,11 @@ def train_model(model, train, test, optimizer, criterion, epochs=3):
             loss.backward()
             optimizer.step()
 
-            if (i+1) % 100 == 0:
+            if (i + 1) % 100 == 0:
                 print(
-                    f'Epoch [{epoch+1}/{epochs}], Step [{i+1}/{len(train)}], Loss: {loss.item():.4f}')
+                    f'Epoch [{epoch + 1}/{epochs}], Step [{i + 1}/{len(train)}], Loss: {loss.item():.4f}')
 
-        print(f'Epoch {epoch+1} completed')
+        print(f'Epoch {epoch + 1} completed')
         print('Testing model...')
         acc = test_model(model, test)
         print(acc)
@@ -76,6 +78,7 @@ def test_model(model, test):
     print(f'Accuracy: {correct}/{len(test.dataset)} ({acc: .2f} %)')
     return acc
 
+
 def save_model_parameters(model):
     original_params = [param.clone() for param in model.parameters()]
     return original_params
@@ -95,9 +98,19 @@ def add_noise(model, sigma):
 
 
 def calculate_entropy(predictions):
+    """
+    Follows this entropy function:
+    https://en.wikipedia.org/wiki/Entropy_(information_theory)
+    log_e
+    The function works by first calculating the quantity of the number
+    in the list and creates a list where it's frequency is placed in that list.
+    For example:
+    [1,7,1,7,1]->[0,3,0,0,0,0,0,2]/len([1,7,1,7,1])->[0,(3/5),0,0,0,0,0,(2/5)]
+    """
     value_counts = torch.bincount(predictions) / len(predictions)
-    entropy = -np.sum([p * np.log10(p) for p in value_counts if p > 0])
+    entropy = -np.sum([p * np.log(p) for p in value_counts if p > 0])
     return entropy
+
 
 @torch.no_grad()
 def test_model_noise(model, test, sigma, iterations):
@@ -116,7 +129,7 @@ def test_model_noise(model, test, sigma, iterations):
                 original_weights = save_model_parameters(model)
                 add_noise(model, sigma)
 
-                outputs = model(image.view(-1, 28*28))
+                outputs = model(image.view(-1, 28 * 28))
                 pred = outputs.argmax(dim=1, keepdim=True)
                 predictions[i] = pred.item()
 
@@ -124,30 +137,62 @@ def test_model_noise(model, test, sigma, iterations):
 
             entropy = calculate_entropy(predictions)
             probability = torch.bincount(predictions, minlength=10)[
-                label.item()]/len(predictions)
+                              label.item()] / len(predictions)
             entropy_probability.append((entropy, probability))
 
-        if (batch+1) % 50 == 0:
-            print(f'Batch {batch+1}/{len(test)} completed')
+        if (batch + 1) % 50 == 0:
+            print(f'Batch {batch + 1}/{len(test)} completed')
 
     return entropy_probability
 
 
 def plot_entropy_prob(ent_prob, sigma, acc, iterations):
+    """
+    Plots the list of probability/entropy parts on the x/y-axis respectively.
+    """
     entropy, probability = zip(*ent_prob)
 
     plt.figure(figsize=(10, 6))
-    plt.scatter(probability, entropy, alpha=1)
+    plt.scatter(probability, entropy, alpha=0.1)
     plt.xlabel('Probability')
     plt.ylabel('Entropy')
     plt.title(f'Entropy to Probability (sigma={sigma}, iterations={iterations}, {acc}%)')
     plt.grid()
-    plt.ylim(-0.1, np.log(10) + 0.1)
-    plt.xlim(-0.2, 1.2)
+    plt.ylim(0, np.log10(10) + 0.1)
+    plt.xlim(-0.1, 1.1)
+    plot_curve(classes=10)
     plt.show()
 
 
+def plot_curve(classes):
+    """
+    This call plots the domain of the amount of given classes.
+    (Beware there exists off-by-one, this is handled in the function)
+    """
+    classes -= 1
+    # Arc-function at bottom
+    x = np.linspace(0.0001, 0.9999, 10000)
+    y = -x * np.log(x) - (1 - x) * np.log(1 - x)
+    plt.plot(x, y, color='orange')
+    x = np.linspace(0.001, 0.999, 1000)
+    y = -x * np.log(x) - (1 - x) * np.log(1 - x)
+
+    # Higher top function
+    y2 = []
+    for p in x:
+        a = -p * np.log(p)
+        for i in range(classes):
+            a -= (1 - p) / (classes) * np.log((1 - p) / classes)
+        y2.append(a)
+
+    plt.plot(x, y, color="orange")
+    plt.plot(x, y2, color="orange")
+
+    # This plots the vertical line
+    plt.plot([0, 0], [0, y2[0]], color="orange")
+
 def main():
+    print(calculate_entropy(torch.tensor([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
     n_inputs = 28 * 28
     n_outputs = 10
     train, test = load_data()
@@ -156,9 +201,10 @@ def main():
     criterion = nn.CrossEntropyLoss()
     train_model(model, train, test, optimizer, criterion, epochs=1)
     accuracy = test_model(model, test)
-    iterations = 10
-    sigma = 0.5
-    plot_entropy_prob(test_model_noise(model, test, sigma=sigma, iterations=iterations), sigma, accuracy,iterations)
+    iterations = 100
+    #sigmas = [x+2 for x in range(5)]
+    #for sigma in sigmas:
+    plot_entropy_prob(test_model_noise(model, test, sigma=0, iterations=iterations), 0, accuracy,iterations)
 
 
 if __name__ == '__main__':
