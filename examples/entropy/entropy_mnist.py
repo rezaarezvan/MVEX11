@@ -113,7 +113,7 @@ def main():
         weighted_average.append((calculate_weighted_averages(entropy), sigma))
         entropies.append(entropy)
    
-    plot_weighted_averages(weighted_average)
+    plot_weighted_averages(weighted_average, SAVE_PLOT=SAVE_PLOT)
     for entropy, sigma in zip(entropies, sigmas):
         plot_entropy_prob(entropy, sigma, accuracy, iterations, SAVE_PLOT=SAVE_PLOT)
 

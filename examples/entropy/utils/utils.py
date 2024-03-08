@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+torch.manual_seed(0)
 
 def save_model_parameters(model):
     original_params = [param.clone() for param in model.parameters()]
@@ -19,7 +20,7 @@ def save_model(model, path):
     print(f'Model saved to {path}')
 
 def load_model(model, path):
-    model.load_state_dict(torch.load(path))
+    model.load_state_dict(torch.load(path, map_location=DEVICE))
     print(f'Model loaded from {path}')
     return model
 
@@ -88,15 +89,15 @@ def plot_entropy_prob(ent_prob, sigma, acc, iterations, SAVE_PLOT=False):
     entropy, probability = zip(*ent_prob)
 
     plt.figure(figsize=(10, 6))
-    plt.scatter(probability, entropy, alpha=0.1)
-    plt.xlabel('Probability')
-    plt.ylabel('Entropy')
+    plt.scatter(entropy, probability, alpha=0.1)
+    plt.ylabel('Probability')
+    plt.xlabel('Entropy')
     plt.title(f'Entropy to Probability (sigma={sigma}, iterations={iterations}, {acc}%)')
     plt.grid()
     plt.ylim(-0.1, np.log(10) + 0.1)
     plt.xlim(-0.1, 1.1)
     plot_curve(classes=10)
-    if SAVE_PLOT: plt.savefig(f'plots/entropy_prob_sigma_{sigma:.2f}.pdf')
+    if SAVE_PLOT: plt.savefig(f'plots/entropies/entropy_prob_sigma_{sigma:.2f}.pdf')
     else: plt.show()
 
 
@@ -163,7 +164,7 @@ def calculate_weighted_averages(data, window_size=0.25):
         start += window_size
     return result
 
-def plot_weighted_averages(data):
+def plot_weighted_averages(data, SAVE_PLOT=False):
     """
     Plots the weighted averages of probabilities for specified windows of entropy.
     
@@ -181,7 +182,9 @@ def plot_weighted_averages(data):
         plt.plot(probability, entropy, marker='o', label=f'Sigma:{sigma:.2f}')
 
     plt.legend()
-    plt.show()
+    if SAVE_PLOT:
+        plt.savefig(f'plots/curves/curves.pdf')
+    else: plt.show()
 
 
 
