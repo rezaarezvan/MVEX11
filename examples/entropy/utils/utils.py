@@ -50,7 +50,7 @@ def calculate_entropy(predictions: torch.Tensor):
     return entropy
 
 @torch.no_grad()
-def test_model_noise(model, dataset, sigma=0, iters=10):
+def test_model_noise(model, dataset, sigma=0, iters=10, CNN=False):
     model.eval()
     result = []
 
@@ -62,7 +62,8 @@ def test_model_noise(model, dataset, sigma=0, iters=10):
             original_params = save_model_parameters(model)
             add_noise(model, sigma)
 
-            output = model(data.view(-1, 28 * 28))
+            data   = data.flatten(1) if not CNN else data
+            output = model(data)
             pred   = torch.softmax(output, dim=1).argmax(dim=1)
 
             predictions.append(pred)
@@ -89,9 +90,9 @@ def plot_entropy_prob(ent_prob, sigma, acc, iterations, SAVE_PLOT=False):
     entropy, probability = zip(*ent_prob)
 
     plt.figure(figsize=(10, 6))
-    plt.scatter(entropy, probability, alpha=0.1)
-    plt.ylabel('Probability')
-    plt.xlabel('Entropy')
+    plt.scatter(probability, entropy, alpha=0.1)
+    plt.xlabel('Probability')
+    plt.ylabel('Entropy')
     plt.title(f'Entropy to Probability (sigma={sigma}, iterations={iterations}, {acc}%)')
     plt.grid()
     plt.ylim(-0.1, np.log(10) + 0.1)
@@ -171,15 +172,15 @@ def plot_weighted_averages(data, SAVE_PLOT=False):
     :param data: A list of tuples, where each tuple is (entropy, probability)
     """
     plt.figure(figsize=(10, 6))
-    plt.ylabel('Entropy')
-    plt.xlabel('Weighted Average Probability')
+    plt.xlabel('Entropy')
+    plt.ylabel('Weighted Average Probability')
     plt.title('Weighted Averages of Probabilities for Specified Windows of Entropy')
     plt.grid()
 
     for lst, sigma in data:
         sorted_data = sorted(lst, key=lambda x: x[0])
         entropy, probability = zip(*sorted_data)
-        plt.plot(probability, entropy, marker='o', label=f'Sigma:{sigma:.2f}')
+        plt.plot(entropy, probability, marker='o', label=f'Sigma:{sigma:.2f}')
 
     plt.legend()
     if SAVE_PLOT:
