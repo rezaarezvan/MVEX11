@@ -8,7 +8,10 @@ from torch.distributions import Categorical
 import torch.optim as optim
 import numpy as np
 import sys
-from utils.utils import load_model, save_model, test_model_noise, calculate_weighted_averages, plot_weighted_averages, plot_entropy_prob
+from utils.entrop import test_model_noise, calculate_weighted_averages, plot_weighted_averages, plot_entropy_prob
+from utils.model import load_model, save_model
+from utils.Conformal_Prediction import ConformalPrediction
+from utils.Conformal_Prediction import load_data as load
 
 model_path = 'model_state/entropy_mnist.pth'
 
@@ -41,8 +44,33 @@ class LogisticRegression(nn.Module):
         x = self.linear(x)
         return x
 
+class Convolutional(nn.Module):
+    def __init__(self):
+        super(Convolutional, self).__init__()
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
+        self.fc1   = nn.Linear(32*7*7, 300)
+        self.fc2   = nn.Linear(300, 10)
+        self.relu  = nn.ReLU()
+        self.pool  = nn.MaxPool2d(2, 2)
+        self.drop  = nn.Dropout(0.2)
 
-def train_model(model, train, test, optimizer, criterion, epochs=3):
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.pool(x)
+        x = self.conv2(x)
+        x = self.relu(x)
+        x = self.pool(x)
+        x = x.view(-1, 32*7*7)
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.drop(x)
+        x = self.fc2(x)
+        return x
+
+
+def train_model(model, train, test, optimizer, criterion, epochs=3, CNN=False):
 
     for epoch in range(epochs):
         model.train()
@@ -50,7 +78,8 @@ def train_model(model, train, test, optimizer, criterion, epochs=3):
             images, labels = images.to(DEVICE), labels.to(DEVICE)
 
             # Forward pass
-            outputs = model(images.flatten(1))
+            images = images.flatten(1) if not CNN else images
+            outputs = model(images)
             loss = criterion(outputs, labels)
 
             # Backward pass
@@ -67,14 +96,15 @@ def train_model(model, train, test, optimizer, criterion, epochs=3):
         test_model(model, test)
 
 @torch.no_grad()
-def test_model(model, test):
+def test_model(model, test, CNN=False):
     model.eval()
     correct = 0
 
     for images, labels in test:
         images, labels = images.to(DEVICE), labels.to(DEVICE)
 
-        outputs = model(images.flatten(start_dim=1))
+        images = images.flatten(1) if not CNN else images
+        outputs = model(images)
         pred = outputs.argmax(dim=1)
         correct += (pred == labels).sum().item()
 
@@ -89,19 +119,22 @@ def main():
     train, test = load_data()
 
     model = LogisticRegression(n_inputs, n_outputs)
+    #model = Convolutional()
     model.to(DEVICE)
-    optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
+    optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
     criterion = nn.CrossEntropyLoss()
 
     if LOAD_WEIGHTS:
         model = load_model(model, model_path)
     else:
-        train_model(model, train, test, optimizer, criterion, epochs=1)
+        train_model(model, train, test, optimizer, criterion, epochs=1, CNN=False)
     
     if SAVE_WEIGHTS:
         save_model(model, model_path)
     
-    accuracy = test_model(model, test)
+    accuracy = test_model(model, test, CNN=False)
+    train, test, calib = load()
+    ConformalPrediction(model, calib, test, alpha=0.1, device=DEVICE)
     iterations = 100
     entropies = []
 
@@ -109,7 +142,7 @@ def main():
     sigmas = np.arange(0, 1, 0.1)
     sigmas = np.append(sigmas, [1, 10, 100, 500])
     for sigma in sigmas:
-        entropy = test_model_noise(model, test, sigma=sigma, iters=iterations)
+        entropy = test_model_noise(model, test, sigma=sigma, iters=iterations, CNN=False)
         weighted_average.append((calculate_weighted_averages(entropy), sigma))
         entropies.append(entropy)
    

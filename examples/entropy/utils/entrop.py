@@ -2,27 +2,10 @@ from torch.distributions import Categorical
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from .model import save_model_parameters, restore_model_parameters
+
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.manual_seed(0)
-
-def save_model_parameters(model):
-    original_params = [param.clone() for param in model.parameters()]
-    return original_params
-
-
-@torch.no_grad()
-def restore_model_parameters(model, original_params):
-    for param, original in zip(model.parameters(), original_params):
-        param.copy_(original)
-
-def save_model(model, path):
-    torch.save(model.state_dict(), path)
-    print(f'Model saved to {path}')
-
-def load_model(model, path):
-    model.load_state_dict(torch.load(path, map_location=DEVICE))
-    print(f'Model loaded from {path}')
-    return model
 
 @torch.no_grad()
 def add_noise(model, sigma):
@@ -154,10 +137,11 @@ def calculate_weighted_averages(data, window_size=0.25):
             continue
         
         # Add count 1 for each data point in the window (think frequency of the probability)
-        weights = [1 for _ in filtered_data]  
+        #weights = [1 for _ in filtered_data]  
+        weights = len(filtered_data)
         
         # Calculate the weighted average for the filtered data
-        weighted_average_filtered = sum(p * w for (_, p), w in zip(filtered_data, weights)) / sum(weights)
+        weighted_average_filtered = sum(p for (_, p) in (filtered_data)) / (weights)
         
         # Print the weighted average for the current window
         print(f"Window {start:.2f} to {end:.2f}: Weighted Average = {weighted_average_filtered}")
