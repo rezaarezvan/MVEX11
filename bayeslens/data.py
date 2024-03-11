@@ -79,3 +79,20 @@ def load_data(dataset_path, batch_size=32):
     val = DataLoader(val, batch_size=batch_size, shuffle=False)
 
     return train, val
+
+
+def _load_data(dataset_path, batch_size=32):
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+    ])
+
+    train = SSLADDataset(
+        root_dir=dataset_path, split='train', transform=transform)
+    val = SSLADDataset(
+        root_dir=dataset_path, split='val', transform=transform)
+
+    train = DataLoader(train, batch_size=batch_size, shuffle=True)
+    val = DataLoader(val, batch_size=batch_size, shuffle=False)
+
+    return train, val
