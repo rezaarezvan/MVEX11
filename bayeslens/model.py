@@ -4,7 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from torch.distributions import Normal
-from gtsrb import load_gtsrb
+from data import load_data
+
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 class ConvBlock(nn.Module):
@@ -76,7 +78,6 @@ class BayesLensModel(nn.Module):
     def __init__(self, num_classes, dropout_rate=0.5):
         super(BayesLensModel, self).__init__()
         self.dropout = nn.Dropout(dropout_rate)
-        # Input shape: 3x256x256
         self.feature_extractor = nn.Sequential(
             ConvBlock(3, 16),
             ConvBlock(16, 32),
@@ -127,66 +128,60 @@ def visualize_attention(original_image, attention_scores):
     plt.show()
 
 
-def train(model, train_loader, val_loader, optimizer, criterion, epochs=1, device='cpu'):
-    model.train()
-    for epoch in range(epochs):
-        total_loss = 0
-        for data, target in train_loader:
-            print(data.shape)
-            data, target = data.to(device), target.to(device)
+def train_model(model, train, test, optimizer, criterion, num_epochs=40):
+    model.to(DEVICE)
+
+    for epoch in range(num_epochs):
+        model.train()
+        for i, (images, labels) in enumerate(train):
+            images, labels = images.to(DEVICE), labels.to(DEVICE)
 
             # Forward pass
-            optimizer.zero_grad()
-            output = model(data)
-            loss = criterion(output, target)
+            outputs = model(images)
+            loss = criterion(outputs, labels)
 
-            # Backward pass
+            # Backward and optimize
+            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            total_loss += loss.item()
-            print(f'Loss: {loss.item()}')
 
-        val_loss, val_acc = test(
-            model, val_loader, criterion, device, mode='Validation')
-        print(
-            f'Epoch {epoch+1}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_acc:.2f}%')
+            if (i+1) % 10 == 0:
+                print(
+                    f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(train)}], Loss: {loss.item():.4f}')
+
+        evaluate_model(model, test)
+        print()
 
 
-def test(model, test_loader, criterion, device='cpu', mode='Test'):
+def evaluate_model(model, test, mode='validation'):
     model.eval()
-    total_loss = 0
+
     correct = 0
+    total = 0
+
     with torch.no_grad():
-        for data, target in test_loader:
-            data, target = data.to(device), target.to(device)
+        for images, labels in test:
+            images, labels = images.to(DEVICE), labels.to(DEVICE)
 
-            output = model(data)
-            total_loss += criterion(output, target).item()
-            pred = output.argmax(dim=1, keepdim=True)
-            correct += pred.eq(target.view_as(pred)).sum().item()
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
 
-    loss = total_loss / len(test_loader)
-    acc = 100. * correct / len(test_loader.dataset)
-    print(f'{mode} set: Average loss: {loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({acc:.2f}%)')
-
-    return loss, acc
+    accuracy = 100 * correct / total
+    print(f'{mode.capitalize()} accuracy of the model: {accuracy} %')
 
 
 def main():
-    train_loader, val_loader, test_loader = load_gtsrb()
-    model = BayesLensModel(43)
-    optimizer = torch.optim.Adam(model.parameters())
+    dataset_path = '../extra/datasets/SODA'
+    train, val, test = load_data(dataset_path, batch_size=16)
+
+    model = BayesLensModel(num_classes=6)
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=0.001, weight_decay=1e-5)
     criterion = nn.CrossEntropyLoss()
 
-    train(model, train_loader, val_loader, optimizer, criterion, epochs=10)
-    test(model, test_loader, criterion)
-
-    # Visualize attention
-    model.eval()
-    data, _ = next(iter(test_loader))
-    _, attention = model.forward_attention(data)
-    for i in range(5):
-        visualize_attention(data[i], attention)
+    train_model(model, train, val, optimizer, criterion)
 
 
 if __name__ == "__main__":
