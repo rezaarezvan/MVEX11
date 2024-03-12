@@ -8,10 +8,9 @@ from torch.distributions import Categorical
 import torch.optim as optim
 import numpy as np
 import sys
-from utils.entrop import test_model_noise, calculate_weighted_averages, plot_weighted_averages, plot_entropy_prob
+from utils.entrop import test_model_noise, calculate_weighted_averages, plot_weighted_averages, plot_entropy_prob, compute_k
 from utils.model import load_model, save_model
-from utils.Conformal_Prediction import ConformalPrediction
-from utils.Conformal_Prediction import load_data as load
+
 
 model_path = 'model_state/entropy_mnist.pth'
 
@@ -133,19 +132,20 @@ def main():
         save_model(model, model_path)
     
     accuracy = test_model(model, test, CNN=False)
-    train, test, calib = load()
-    ConformalPrediction(model, calib, test, alpha=0.1, device=DEVICE)
     iterations = 100
     entropies = []
 
     weighted_average = []
     sigmas = np.arange(0, 1, 0.1)
     sigmas = np.append(sigmas, [1, 10, 100, 500])
+
     for sigma in sigmas:
         entropy = test_model_noise(model, test, sigma=sigma, iters=iterations, CNN=False)
         weighted_average.append((calculate_weighted_averages(entropy), sigma))
         entropies.append(entropy)
-   
+        for lam in [0.1, 0.5, 1]:
+            print(f"sigma: {sigma}\nlambda: {lam}\nK: {compute_k(entropy, _lambda=lam)}")
+
     plot_weighted_averages(weighted_average, SAVE_PLOT=SAVE_PLOT)
     for entropy, sigma in zip(entropies, sigmas):
         plot_entropy_prob(entropy, sigma, accuracy, iterations, SAVE_PLOT=SAVE_PLOT)

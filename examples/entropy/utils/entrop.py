@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from .model import save_model_parameters, restore_model_parameters
+import json
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.manual_seed(0)
@@ -171,10 +172,33 @@ def plot_weighted_averages(data, SAVE_PLOT=False):
         plt.savefig(f'plots/curves/curves.pdf')
     else: plt.show()
 
+def compute_k(data, _lambda=0.1):
+    """
+    Computes the "k"-metric defined as 
+    Expected(P_sigma(e)) - Correlation(s_bar, e_bar)*lambda
 
+    :param data: A list of tuples, where each tuple is (entropy, probability)
+    """
+    ent, pro = zip(*data)
+    ent = np.array(ent)
+    pro = np.array(pro)
 
+    ent_mean = ent.mean()
+    pro_mean = pro.mean()
 
+    ent_norm = ent - ent_mean
+    pro_norm = pro - pro_mean
 
+    pairs_norm = ent_norm * pro_norm
 
+    nominator = pairs_norm.mean()
 
+    var_ent = np.var(ent)
+    var_pro = np.var(pro)
+
+    denominator = np.sqrt((var_ent*var_pro))
+
+    correlation = nominator / denominator
+
+    return pro_mean - correlation*_lambda
 
