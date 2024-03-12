@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Normal
-from data import _load_data
+from data import load_data
 from torchvision.models import vit_b_16, ViT_B_16_Weights
+from torchvision import transforms
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -89,8 +90,13 @@ def evaluate_model(model, test, mode='validation'):
 
 
 def main():
-    dataset_path = '../extra/datasets/labeled_trainval'
-    train, val = _load_data(dataset_path, batch_size=16)
+    dataset_path = '../extra/datasets/SODA'
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+    ])
+    train, val, test = load_data(
+        dataset_path, batch_size=16, transform=transform)
 
     model = BayesLensModelV2(num_classes=6)
     optimizer = torch.optim.Adam(

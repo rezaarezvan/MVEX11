@@ -173,8 +173,8 @@ def evaluate_model(model, test, mode='validation'):
 
 
 def main():
-    dataset_path = '../extra/datasets/labeled_trainval'
-    train, val = load_data(dataset_path, batch_size=16)
+    dataset_path = '../extra/datasets/SODA'
+    train, val, test = load_data(dataset_path, batch_size=16)
 
     model = BayesLensModel(num_classes=6)
     optimizer = torch.optim.Adam(
