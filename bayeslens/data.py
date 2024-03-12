@@ -5,8 +5,13 @@ from PIL import Image
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 
+DEFAULT_TRANSFORM = transforms.Compose([
+    transforms.Resize((256, 256)),
+    transforms.ToTensor(),
+])
 
-class SSLADDataset(Dataset):
+
+class SODADataset(Dataset):
     def __init__(self, root_dir, split='train', transform=None):
         """
         Args:
@@ -16,12 +21,17 @@ class SSLADDataset(Dataset):
         """
         self.root_dir = root_dir
         self.split = split
+        self.subdir = 'labeled_trainval' if split in [
+            'train', 'val'] else 'labeled_test'
         self.transform = transform
-        self.images, self.annotations = self._load_annotations(split)
+        self.annotations_file = f'instance_{split}.json'
+        self.images, self.annotations = self._load_annotations()
 
-    def _load_annotations(self, split):
+    def _load_annotations(self):
         annotation_path = os.path.join(
-            self.root_dir, 'SSLAD-2D', 'labeled', 'annotations', f'instance_{split}.json')
+            self.root_dir, self.subdir, 'SSLAD-2D', 'labeled', 'annotations', self.annotations_file)
+
+        load_categories(annotation_path)
         with open(annotation_path) as f:
             data = json.load(f)
 
@@ -37,7 +47,7 @@ class SSLADDataset(Dataset):
         img_info = self.images[img_id]
         img_filename = img_info['file_name']
 
-        img_path = os.path.join(self.root_dir, 'SSLAD-2D',
+        img_path = os.path.join(self.root_dir, self.subdir, 'SSLAD-2D',
                                 'labeled', self.split, img_filename)
         image = Image.open(img_path).convert('RGB')
 
@@ -61,38 +71,20 @@ def load_categories(annotation_path):
     categories = data['categories']
     category_mapping = {category['id']: category['name']
                         for category in categories}
+    print(category_mapping)
     return category_mapping
 
 
-def load_data(dataset_path, batch_size=32):
-    transform = transforms.Compose([
-        transforms.Resize((256, 256)),
-        transforms.ToTensor(),
-    ])
-
-    train = SSLADDataset(
+def load_data(dataset_path, batch_size=32, transform=DEFAULT_TRANSFORM):
+    train = SODADataset(
         root_dir=dataset_path, split='train', transform=transform)
-    val = SSLADDataset(
+    val = SODADataset(
         root_dir=dataset_path, split='val', transform=transform)
+    test = SODADataset(
+        root_dir=dataset_path, split='test', transform=transform)
 
     train = DataLoader(train, batch_size=batch_size, shuffle=True)
-    val = DataLoader(val, batch_size=batch_size, shuffle=False)
+    val = DataLoader(val, batch_size=batch_size, shuffle=True)
+    test = DataLoader(test, batch_size=batch_size, shuffle=True)
 
-    return train, val
-
-
-def _load_data(dataset_path, batch_size=32):
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-    ])
-
-    train = SSLADDataset(
-        root_dir=dataset_path, split='train', transform=transform)
-    val = SSLADDataset(
-        root_dir=dataset_path, split='val', transform=transform)
-
-    train = DataLoader(train, batch_size=batch_size, shuffle=True)
-    val = DataLoader(val, batch_size=batch_size, shuffle=False)
-
-    return train, val
+    return train, val, test
