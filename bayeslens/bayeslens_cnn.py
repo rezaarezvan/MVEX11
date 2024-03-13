@@ -2,9 +2,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import matplotlib.pyplot as plt
 from torch.distributions import Normal
 from data import load_data
+from utils.entrop import test_model_noise, calculate_weighted_averages, plot_weighted_averages, plot_entropy_prob, compute_k
+from utils.model import load_model, save_model
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -46,42 +47,13 @@ class BayesianLinear(nn.Module):
         return F.linear(x, weight, bias)
 
 
-class SelfAttention(nn.Module):
-    def __init__(self, in_dim):
-        super(SelfAttention, self).__init__()
-        self.query_conv = nn.Conv2d(in_dim, in_dim // 8, kernel_size=1)
-        self.key_conv = nn.Conv2d(in_dim, in_dim // 8, kernel_size=1)
-        self.value_conv = nn.Conv2d(in_dim, in_dim, kernel_size=1)
-
-        self.softmax = nn.Softmax(dim=-2)
-        self.last_attention = None
-
-    def forward(self, x):
-        query = self.query_conv(x).view(
-            x.shape[0], -1, x.shape[2]*x.shape[3]).permute(0, 2, 1)
-        key = self.key_conv(x).view(x.shape[0], -1, x.shape[2]*x.shape[3])
-        value = self.value_conv(x).view(x.shape[0], -1, x.shape[2]*x.shape[3])
-
-        attention = torch.bmm(query, key)
-        attention = self.softmax(attention)
-
-        out = torch.bmm(value, attention.permute(0, 2, 1))
-        out = out.view(x.shape)
-        self.last_attention = attention
-        return out + x
-
-    def get_last_attention(self):
-        return self.last_attention
-
-
-class BayesLensModel(nn.Module):
+class BayesLensCNN(nn.Module):
     def __init__(self, num_classes, dropout_rate=0.5):
-        super(BayesLensModel, self).__init__()
+        super(BayesLensCNN, self).__init__()
         self.dropout = nn.Dropout(dropout_rate)
         self.feature_extractor = nn.Sequential(
             ConvBlock(3, 16),
             ConvBlock(16, 32),
-            SelfAttention(32),
         )
         self.flatten = nn.Flatten()
         self.classifier = BayesianLinear(32*64*64, num_classes)
@@ -92,40 +64,6 @@ class BayesLensModel(nn.Module):
         x = self.dropout(x)
         x = self.classifier(x)
         return x
-
-    def forward_attention(self, x):
-        x = self.feature_extractor(x)
-        x = self.flatten(x)
-        x = self.classifier(x)
-        attention_scores = self.feature_extractor[-1].get_last_attention()
-        return x, attention_scores
-
-
-def visualize_attention(original_image, attention_scores):
-    image = original_image.permute(1, 2, 0).cpu().numpy()
-    image = (image - image.min()) / (image.max() - image.min())
-
-    attention = attention_scores.sum(dim=1)[0]
-    attention = attention.cpu().detach().numpy()
-    attention_resized = np.resize(attention, (image.shape[0], image.shape[1]))
-
-    attention_resized = (attention_resized - np.percentile(attention_resized, 10)) / \
-        (np.percentile(attention_resized, 90) -
-         np.percentile(attention_resized, 10))
-    attention_resized = np.clip(attention_resized, 0, 1)
-
-    plt.figure(figsize=(10, 5))
-    plt.subplot(1, 2, 1)
-    plt.imshow(image)
-    plt.title("Original Image")
-    plt.axis('off')
-
-    plt.subplot(1, 2, 2)
-    plt.imshow(image, alpha=0.6)
-    plt.imshow(attention_resized, cmap='jet', alpha=0.4)
-    plt.title("Attention Overlay")
-    plt.axis('off')
-    plt.show()
 
 
 def train_model(model, train, test, optimizer, criterion, num_epochs=40):
@@ -176,12 +114,33 @@ def main():
     dataset_path = '../extra/datasets/SODA'
     train, val, test = load_data(dataset_path, batch_size=16)
 
-    model = BayesLensModel(num_classes=6)
+    model = BayesLensCNN(num_classes=6)
     optimizer = torch.optim.Adam(
         model.parameters(), lr=0.001, weight_decay=1e-5)
     criterion = nn.CrossEntropyLoss()
 
     train_model(model, train, val, optimizer, criterion)
+
+    iterations = 2
+    entropies = []
+    weighted_average = []
+
+    sigmas = np.arange(0.1, 1, 0.1)
+    sigmas = np.append(sigmas, [1, 10, 100, 500])
+
+    for sigma in sigmas:
+        print(f"Sigma: {sigma}")
+        entropy = test_model_noise(model, test, sigma=sigma, iters=iterations)
+        weighted_average.append((calculate_weighted_averages(entropy), sigma))
+        entropies.append(entropy)
+        for lam in [0.1, 0.5, 1]:
+            print(f"Lambda: {lam}, K: {compute_k(entropy, _lambda=lam)}")
+        print('-----------------------------------\n')
+
+    plot_weighted_averages(weighted_average)
+    for entropy, sigma in zip(entropies, sigmas):
+        plot_entropy_prob(entropy, sigma, 10,
+                          iterations)
 
 
 if __name__ == "__main__":

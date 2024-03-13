@@ -71,7 +71,6 @@ def load_categories(annotation_path):
     categories = data['categories']
     category_mapping = {category['id']: category['name']
                         for category in categories}
-    print(category_mapping)
     return category_mapping
 
 
