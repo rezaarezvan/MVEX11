@@ -22,8 +22,7 @@ def gen_stats(base_path="."):
                     file_.readline) if t.type in TOKEN_WHITELIST]
                 token_count, line_count = len(tokens), len(
                     set([x for t in tokens for x in range(t.start[0], t.end[0]+1)]))
-                table.append([relfilepath, line_count, token_count /
-                             line_count]) if line_count else table.append([relfilepath, line_count, 0])
+                table.append([relfilepath, line_count, token_count/line_count])
     return table
 
 
