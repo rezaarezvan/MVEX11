@@ -4,6 +4,7 @@ import torch
 from PIL import Image
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
+import torchvision
 
 DEFAULT_TRANSFORM = transforms.Compose([
     transforms.Resize((256, 256)),
@@ -74,7 +75,7 @@ def load_categories(annotation_path):
     return category_mapping
 
 
-def load_data(dataset_path, batch_size=32, transform=DEFAULT_TRANSFORM):
+def load_SODA(dataset_path, batch_size=32, transform=DEFAULT_TRANSFORM):
     train = SODADataset(
         root_dir=dataset_path, split='train', transform=transform)
     val = SODADataset(
@@ -87,3 +88,15 @@ def load_data(dataset_path, batch_size=32, transform=DEFAULT_TRANSFORM):
     test = DataLoader(test, batch_size=batch_size, shuffle=True)
 
     return train, val, test
+
+
+def load_MNIST(root_dir='../../extra/datasets', batch_size=32, transform=transforms.ToTensor()):
+    train = torchvision.datasets.MNIST(
+        root=root_dir, train=True, download=True, transform=transform)
+    test = torchvision.datasets.MNIST(
+        root=root_dir, train=True, download=True, transform=transform)
+
+    train = DataLoader(train, batch_size=batch_size, shuffle=True)
+    test = DataLoader(test, batch_size=batch_size, shuffle=True)
+
+    return train, test

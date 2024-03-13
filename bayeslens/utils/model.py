@@ -1,5 +1,4 @@
 import torch
-
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -23,3 +22,51 @@ def load_model(model, path):
     model.load_state_dict(torch.load(path, map_location=DEVICE))
     print(f'Model loaded from {path}')
     return model
+
+
+def train_model(model, train, val, test, optimizer, criterion, flatten=False, num_epochs=40):
+    model.to(DEVICE)
+    for epoch in range(num_epochs):
+        model.train()
+        for i, (images, labels) in enumerate(train):
+            images, labels = images.to(DEVICE), labels.to(DEVICE)
+
+            # Forward pass
+            outputs = model(images) if not flatten else model(
+                images.flatten(1))
+            loss = criterion(outputs, labels)
+
+            # Backward and optimize
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            if (i+1) % 10 == 0:
+                print(
+                    f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(train)}], Loss: {loss.item():.4f}')
+
+        test_model(model, test)
+        print()
+
+
+@torch.no_grad()
+def test_model(model, test, flatten=False, mode='validation'):
+    model.eval()
+
+    correct = 0
+    total = 0
+
+    for i, (images, labels) in enumerate(test):
+        images, labels = images.to(DEVICE), labels.to(DEVICE)
+
+        outputs = model(images) if not flatten else model(
+            images.flatten(1))
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+        if (i+1) % 10 == 0:
+            print(f'Step [{i+1}/{len(test)}]')
+
+    accuracy = 100 * correct / total
+    print(f'{mode.capitalize()} accuracy of the model: {accuracy} %')
