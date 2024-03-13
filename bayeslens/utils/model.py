@@ -1,4 +1,6 @@
 import torch
+# from .entrop import test_model_noise, calculate_weighted_averages, compute_k, plot_weighted_averages, plot_entropy_prob
+
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -70,3 +72,23 @@ def test_model(model, test, flatten=False, mode='validation'):
 
     accuracy = 100 * correct / total
     print(f'{mode.capitalize()} accuracy of the model: {accuracy} %')
+
+
+# def model_with_noise(model, test, sigmas, lambdas, iterations):
+#     entropies = []
+#     weighted_average = []
+#
+#     for sigma in sigmas:
+#         print(f"Sigma: {sigma}")
+#         entropy = test_model_noise(model, test, sigma=sigma, iters=iterations)
+#         weighted_average.append((calculate_weighted_averages(entropy), sigma))
+#         entropies.append(entropy)
+#         for _lambda in lambdas:
+#             print(f"Lambda: {_lambda}, K: {
+#                   compute_k(entropy, _lambda=_lambda)}")
+#         print('-----------------------------------\n')
+#
+#     plot_weighted_averages(weighted_average)
+#     for entropy, sigma in zip(entropies, sigmas):
+#         plot_entropy_prob(entropy, sigma, 10,
+#                           iterations)
