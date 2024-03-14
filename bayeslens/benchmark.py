@@ -8,6 +8,9 @@ from models.bayeslens_cnn import BayesLensCNN
 from models.bayeslens_vit import BayesLens_ViT
 from models.vit_b_16 import Pretrained_ViT
 from utils.model import train_model
+from utils.bench import test_model_noise
+from utils.entrop import get_weight_avg, get_psi, get_best_sigma
+from utils.plot import plot_entropy_prob, plot_weight_avg
 
 SODA = True if '-s' in sys.argv or '--soda' in sys.argv else False
 MNIST = True if '-m' in sys.argv or '--mnist' in sys.argv else False
@@ -23,9 +26,9 @@ def main():
     pretrained_vit = Pretrained_ViT()
     bayeslens_vit = BayesLens_ViT()
     bayeslens_cnn = BayesLensCNN()
-    bayeslens_base = BayesLens(28*28, num_classes=10)
+    bayeslens_base = BayesLens(256*256, num_classes=6)
 
-    models = [pretrained_vit, bayeslens_vit, bayeslens_cnn, bayeslens_base]
+    models = [bayeslens_cnn]
 
     optimizers = [torch.optim.Adam(
         model.parameters(), lr=0.1, weight_decay=1e-4) for model in models]
@@ -49,6 +52,31 @@ def main():
         else:
             train_model(model, train, val, test, optimizers[models.index(
                 model)], criterion, num_epochs=1)
+
+        iterations = 10
+        entrop_window_size = 0.1
+
+        entropies = []
+        weighted_average = []
+
+        psi_list = []
+        sigmas = [0, 0.25, 0.5]
+        for sigma in sigmas:
+            print(f"Sigma: {sigma}")
+            entropy = test_model_noise(
+                model, test, sigma=sigma, iters=iterations)
+            weighted_average.append(
+                (get_weight_avg(entropy, window_size=entrop_window_size), sigma))
+            entropies.append(entropy)
+            for lam in [0.1, 0.5, 1]:
+                print(f"Lambda: {lam}, K: {get_psi(entropy, _lambda=lam)}")
+            psi_list.append(get_psi(entropy))
+            print('-----------------------------------\n')
+
+        print(get_best_sigma(psi_list, sigmas))
+        plot_weight_avg(weighted_average, )
+        for entropy, sigma in zip(entropies, sigmas):
+            plot_entropy_prob(entropy, sigma, 0, iterations)
 
 
 if __name__ == "__main__":
