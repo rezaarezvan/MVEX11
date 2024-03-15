@@ -2,14 +2,16 @@ import sys
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
+
 from data import load_SODA, load_MNIST
 from models.bayeslens_base import BayesLens
 from models.bayeslens_cnn import BayesLensCNN
 from models.bayeslens_vit import BayesLens_ViT
 from models.vit_b_16 import Pretrained_ViT
-from utils.model import train_model
-from utils.bench import test_model_noise
-from utils.entrop import get_weight_avg, get_psi, get_best_sigma
+
+from utils.helpers import train_model
+from utils.perturbation import test_model_noise
+from utils.metrics import get_weight_avg, get_psi, get_best_sigma
 from utils.plot import plot_entropy_prob, plot_weight_avg
 
 SODA = True if '-s' in sys.argv or '--soda' in sys.argv else False

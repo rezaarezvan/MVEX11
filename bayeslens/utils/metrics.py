@@ -6,7 +6,7 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.manual_seed(0)
 
 
-def get_entropy(predictions: torch.Tensor):
+def entropy(predictions: torch.Tensor):
     """
     Follows this entropy function:
     https://en.wikipedia.org/wiki/Entropy_(information_theory)
@@ -28,7 +28,7 @@ def get_entropy(predictions: torch.Tensor):
     return entropy
 
 
-def get_weight_avg(data, window_size=0.25):
+def weight_avg(data, window_size=0.25):
     """
     Calculates and prints the weighted average of probabilities for specified windows of entropy.
 
@@ -70,19 +70,32 @@ def get_weight_avg(data, window_size=0.25):
     return result
 
 
-def get_best_sigma(psi_list, sigma_list):
+def best_sigma(psi_list, sigma_list):
     """
     Returns max psi, sigma based on psi_list
+    :param psi_list: A list of psi values
+    :param sigma_list: A list of sigma values
     """
     return max(zip(psi_list, sigma_list), key=lambda x: x[0])
 
 
-def get_psi(data, _lambda=0.1):
+def pi(alpha, alpha_sigma):
     """
-    Computes the "ψ"-metric defined as
-    Expected(P_sigma(h)) - Correlation(s_bar, h_bar)*lambda
+    Computes the "π_σ"-metric defined as
+    π_σ = α - α_σ
+    where α is the original accuracy and α_σ is the accuracy with noise
+    :param alpha: The original accuracy
+    :param alpha_sigma: The accuracy with noise
+    """
+    return alpha - alpha_sigma
 
+
+def psi(data, _lambda=0.1):
+    """
+    Computes the "ψ_σ"-metric defined as
+    ψ_σ = E[p_σ(H)] - corr_σ(α, H) λ
     :param data: A list of tuples, where each tuple is (entropy, probability)
+    :param _lambda: The lambda value to use in the calculation
     """
     ent, pro = zip(*data)
     ent = np.array(ent)
