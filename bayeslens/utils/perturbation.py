@@ -1,13 +1,13 @@
 import torch
-from .entrop import get_entropy
-from .model import add_noise, restore_model_parameters, save_model_parameters
+from .metrics import entropy
+from .helpers import add_noise, restore_model_parameters, save_model_parameters
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.manual_seed(0)
 
 
 @torch.no_grad()
-def test_model_noise(model, dataset, sigma=0, iters=10, CNN=False):
+def test_model_noise(model, dataset, sigma=0, iters=10, CNN=True):
     model.eval()
     result = []
 
@@ -18,6 +18,7 @@ def test_model_noise(model, dataset, sigma=0, iters=10, CNN=False):
             original_params = save_model_parameters(model)
             add_noise(model, sigma)
 
+            data = data if CNN else data.flatten(start_dim=1)
             output = model(data)
             pred = torch.softmax(output, dim=1).argmax(dim=1)
 
@@ -25,10 +26,10 @@ def test_model_noise(model, dataset, sigma=0, iters=10, CNN=False):
             restore_model_parameters(model, original_params)
 
         pred_matrix = torch.stack(predictions, dim=1)
-        entropy = get_entropy(pred_matrix)
+        ent = entropy(pred_matrix)
         accuracy = (pred_matrix == target.view(-1, 1)).float().mean(dim=1)
 
-        for e, a in zip(entropy, accuracy):
+        for e, a in zip(ent, accuracy):
             result.append((e.item(), a.item()))
 
         if (i + 1) % 50 == 0:

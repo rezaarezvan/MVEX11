@@ -6,10 +6,11 @@ from .BayesianLinear import BayesianLinear
 class BayesLens_ViT(nn.Module):
     def __init__(self, num_classes=6):
         super(BayesLens_ViT, self).__init__()
-        self.classifier = BayesianLinear(768, num_classes)
-        self.softmax = nn.Softmax(dim=1)
         self.vit = vit_b_16(weights=ViT_B_16_Weights.DEFAULT)
-        self.vit.heads = self.classifier
+        self.classifier = BayesianLinear(
+            self.vit.heads.head.in_features, num_classes)
+        self.vit.heads.head = self.classifier
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
         x = self.vit(x)

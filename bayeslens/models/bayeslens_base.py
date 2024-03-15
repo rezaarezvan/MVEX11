@@ -3,11 +3,11 @@ from .BayesianLinear import BayesianLinear
 
 
 class BayesLens(nn.Module):
-    def __init__(self, input_size=256*256*3, num_classes=6, hidden_size1=1024, hidden_size2=512, hidden_size3=128, dropout_rate=0.5):
+    def __init__(self, num_inputs, num_classes, hidden_size1=1024, hidden_size2=512, hidden_size3=128, dropout_rate=0.5):
         super(BayesLens, self).__init__()
         self.dropout = nn.Dropout(dropout_rate)
         self.flatten = nn.Flatten()
-        self.fc1 = BayesianLinear(input_size, hidden_size1)
+        self.fc1 = BayesianLinear(num_inputs, hidden_size1)
         self.fc2 = BayesianLinear(hidden_size1, hidden_size2)
         self.fc3 = BayesianLinear(hidden_size2, hidden_size3)
         self.fc4 = BayesianLinear(hidden_size3, num_classes)

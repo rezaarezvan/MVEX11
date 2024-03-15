@@ -6,9 +6,29 @@ from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 import torchvision
 
-DEFAULT_TRANSFORM = transforms.Compose([
+DEFAULT_TRANSFORM_SODA_VIT = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+])
+
+DEFAULT_TRANSFORM_SODA = transforms.Compose([
     transforms.Resize((256, 256)),
     transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+])
+
+DEFAULT_TRANSFORM_MNIST = transforms.Compose([
+    transforms.Resize((28, 28)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5], std=[0.5])
+])
+
+DEFAULT_TRANSFORM_MNIST_VIT = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.Grayscale(num_output_channels=3),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 ])
 
 
@@ -75,13 +95,13 @@ def load_categories(annotation_path):
     return category_mapping
 
 
-def load_SODA(dataset_path, batch_size=32, transform=DEFAULT_TRANSFORM):
+def load_SODA(dataset_path, batch_size=32, ViT=False):
     train = SODADataset(
-        root_dir=dataset_path, split='train', transform=transform)
+        root_dir=dataset_path, split='train', transform=DEFAULT_TRANSFORM_SODA_VIT if ViT else DEFAULT_TRANSFORM_SODA)
     val = SODADataset(
-        root_dir=dataset_path, split='val', transform=transform)
+        root_dir=dataset_path, split='val', transform=DEFAULT_TRANSFORM_SODA_VIT if ViT else DEFAULT_TRANSFORM_SODA)
     test = SODADataset(
-        root_dir=dataset_path, split='test', transform=transform)
+        root_dir=dataset_path, split='test', transform=DEFAULT_TRANSFORM_SODA_VIT if ViT else DEFAULT_TRANSFORM_SODA)
 
     train = DataLoader(train, batch_size=batch_size, shuffle=True)
     val = DataLoader(val, batch_size=batch_size, shuffle=True)
@@ -90,11 +110,11 @@ def load_SODA(dataset_path, batch_size=32, transform=DEFAULT_TRANSFORM):
     return train, val, test
 
 
-def load_MNIST(root_dir='../../extra/datasets', batch_size=32, transform=transforms.ToTensor()):
+def load_MNIST(root_dir='../../extra/datasets', batch_size=16, ViT=False):
     train = torchvision.datasets.MNIST(
-        root=root_dir, train=True, download=True, transform=transform)
+        root=root_dir, train=True, download=True, transform=DEFAULT_TRANSFORM_MNIST_VIT if ViT else DEFAULT_TRANSFORM_MNIST)
     test = torchvision.datasets.MNIST(
-        root=root_dir, train=True, download=True, transform=transform)
+        root=root_dir, train=True, download=True, transform=DEFAULT_TRANSFORM_MNIST_VIT if ViT else DEFAULT_TRANSFORM_MNIST)
 
     train = DataLoader(train, batch_size=batch_size, shuffle=True)
     test = DataLoader(test, batch_size=batch_size, shuffle=True)
