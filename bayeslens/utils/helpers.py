@@ -35,7 +35,7 @@ def add_noise(model, sigma):
     return model
 
 
-def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEntropyLoss()):
+def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEntropyLoss(), writer=None):
     model.to(DEVICE)
     for epoch in range(epochs):
         model.train()
@@ -58,6 +58,10 @@ def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEnt
 
             losses.append(loss.item())
             accuracies.append(accuracy.item())
+
+            if writer:
+                writer.add_scalar('Loss/train', loss.item(), epoch)
+                writer.add_scalar('Accuracy/train', accuracy.item(), epoch)
 
             loop.set_description(f"Epoch [{epoch+1}/{epochs}]")
             loop.set_postfix(loss=loss.item(), accuracy=accuracy.item())
