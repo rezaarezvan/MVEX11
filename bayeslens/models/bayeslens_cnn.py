@@ -19,16 +19,17 @@ class ConvBlock(nn.Module):
 
 
 class BayesLensCNN(nn.Module):
-    def __init__(self, num_inputs=3, img_size=256, num_classes=6, dropout_rate=0.5):
+    def __init__(self, num_channels=3, img_size=256, num_classes=6, dropout_rate=0.5):
         super(BayesLensCNN, self).__init__()
         self.dropout = nn.Dropout(dropout_rate)
         self.feature_extractor = nn.Sequential(
-            ConvBlock(num_inputs, 16),
+            ConvBlock(num_channels, 16),
             ConvBlock(16, 32),
         )
         self.flatten = nn.Flatten()
         with torch.no_grad():
-            self._dummy_input = torch.zeros(1, num_inputs, img_size, img_size)
+            self._dummy_input = torch.zeros(
+                1, num_channels, img_size, img_size)
             self._flattened_size = self._forward_features(
                 self._dummy_input).shape[1]
 

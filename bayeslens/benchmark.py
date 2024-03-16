@@ -2,13 +2,13 @@ import sys
 import torch
 import torch.nn as nn
 
-from data import load_SODA, load_MNIST
+from data.loaders import load_SODA, load_MNIST
 from models.bayeslens_base import BayesLens
 from models.bayeslens_cnn import BayesLensCNN
 from models.bayeslens_vit import BayesLens_ViT
 from models.vit_b_16 import Pretrained_ViT
 
-from utils.helpers import train_model
+from utils.helpers import train as train_model
 from utils.perturbation import test_model_noise
 from utils.metrics import weight_avg, psi, best_sigma
 from utils.plot import plot_entropy_prob, plot_weight_avg
@@ -28,7 +28,7 @@ def main():
     pretrained_vit = Pretrained_ViT(num_classes=NUM_CLASSES)
     bayeslens_vit = BayesLens_ViT(num_classes=NUM_CLASSES)
     bayeslens_cnn = BayesLensCNN(
-        num_inputs=NUM_CHANNELS, img_size=256 if SODA else 28, num_classes=NUM_CLASSES)
+        num_channels=NUM_CHANNELS, img_size=256 if SODA else 28, num_classes=NUM_CLASSES)
     bayeslens_base = BayesLens(num_inputs=NUM_INPUTS, num_classes=NUM_CLASSES)
 
     models = [pretrained_vit, bayeslens_vit, bayeslens_cnn, bayeslens_base]
@@ -47,11 +47,12 @@ def main():
             val = test
 
         if isinstance(model, BayesLens):
-            train_model(model, train, val, test, optimizers[models.index(
-                model)], criterion, flatten=True, num_epochs=1)
+            # def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEntropyLoss()):
+            train_model(model, train, val, optimizers[models.index(
+                model)], 1, lossfn=criterion, flatten=True)
         else:
-            train_model(model, train, val, test, optimizers[models.index(
-                model)], criterion, num_epochs=1)
+            train_model(model, train, val, optimizers[models.index(
+                model)], 1, lossfn=criterion)
 
         iterations = 10
         entrop_window_size = 0.1

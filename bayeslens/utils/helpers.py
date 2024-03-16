@@ -1,14 +1,18 @@
 import torch
+import numpy as np
+import torch.nn as nn
+from tqdm.auto import tqdm
+
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-def save_model_parameters(model):
+def save_parameters(model):
     original_params = [param.clone() for param in model.parameters()]
     return original_params
 
 
 @torch.no_grad()
-def restore_model_parameters(model, original_params):
+def restore_parameters(model, original_params):
     for param, original in zip(model.parameters(), original_params):
         param.copy_(original)
 
@@ -31,49 +35,50 @@ def add_noise(model, sigma):
     return model
 
 
-def train_model(model, train, val, test, optimizer, criterion, flatten=False, num_epochs=40):
+def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEntropyLoss(), flatten=False):
     model.to(DEVICE)
-    for epoch in range(num_epochs):
+    for epoch in range(epochs):
         model.train()
-        for i, (images, labels) in enumerate(train):
+        loop = tqdm(train_loader, leave=True)
+        losses, accuracies = [], []
+        for images, labels in loop:
             images, labels = images.to(DEVICE), labels.to(DEVICE)
 
             # Forward pass
-            outputs = model(images) if not flatten else model(
-                images.flatten(1))
-            loss = criterion(outputs, labels)
+            out = model(images) if not flatten else model(images.flatten(1))
+            loss = lossfn(out, labels)
 
-            # Backward and optimize
-            optimizer.zero_grad()
+            # Backward pass
+            optim.zero_grad()
             loss.backward()
-            optimizer.step()
+            optim.step()
 
-            if (i+1) % 10 == 0:
-                print(
-                    f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(train)}], Loss: {loss.item():.4f}')
+            preds = out.argmax(dim=1)
+            accuracy = (preds == labels).float().mean()
 
-        test_model(model, test)
-        print()
+            losses.append(loss.item())
+            accuracies.append(accuracy.item())
+
+            loop.set_description(f"Epoch [{epoch+1}/{epochs}]")
+            loop.set_postfix(loss=loss.item(), accuracy=accuracy.item())
+
+        print(f"Epoch {epoch+1} Summary - Loss: {np.mean(losses):.4f}, Accuracy: {np.mean(accuracies):.4f}")
+        evaluate(model, test_loader)
 
 
 @torch.no_grad()
-def test_model(model, test, flatten=False, mode='validation'):
+def evaluate(model, test_loader):
     model.eval()
+    model.to(DEVICE)
 
-    correct = 0
-    total = 0
-
-    for i, (images, labels) in enumerate(test):
+    loop = tqdm(test_loader, leave=False)
+    accuracies = []
+    for images, labels in loop:
         images, labels = images.to(DEVICE), labels.to(DEVICE)
+        outputs = model(images)
+        preds = outputs.argmax(dim=1)
+        accuracy = (preds == labels).float().mean()
+        accuracies.append(accuracy.item())
 
-        outputs = model(images) if not flatten else model(
-            images.flatten(1))
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-        if (i+1) % 50 == 0:
-            print(f'Step [{i+1}/{len(test)}]')
-
-    accuracy = 100 * correct / total
-    print(f'{mode.capitalize()} accuracy of the model: {accuracy} %')
+    avg_accuracy = np.mean(accuracies)
+    print(f"Test Set Accuracy: {avg_accuracy:.4f}")
