@@ -3,7 +3,7 @@ from .BayesianLinear import BayesianLinear
 
 
 class BayesLens(nn.Module):
-    def __init__(self, num_inputs, num_classes, hidden_size1=1024, hidden_size2=512, hidden_size3=128, dropout_rate=0.5):
+    def __init__(self, num_inputs, num_classes, hidden_size1=1024, hidden_size2=512, hidden_size3=128, dropout_rate=0.1):
         super(BayesLens, self).__init__()
         self.dropout = nn.Dropout(dropout_rate)
         self.flatten = nn.Flatten()

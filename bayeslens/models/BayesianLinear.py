@@ -5,7 +5,7 @@ from torch.distributions import Normal
 
 
 class BayesianLinear(nn.Module):
-    def __init__(self, in_features, out_features, mu=0, sigma=0.1):
+    def __init__(self, in_features, out_features, mu=-3, sigma=0.1):
         super(BayesianLinear, self).__init__()
         self.in_features = in_features
         self.out_features = out_features

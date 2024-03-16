@@ -35,7 +35,7 @@ def add_noise(model, sigma):
     return model
 
 
-def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEntropyLoss(), flatten=False):
+def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEntropyLoss()):
     model.to(DEVICE)
     for epoch in range(epochs):
         model.train()
@@ -45,7 +45,7 @@ def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEnt
             images, labels = images.to(DEVICE), labels.to(DEVICE)
 
             # Forward pass
-            out = model(images) if not flatten else model(images.flatten(1))
+            out = model(images)
             loss = lossfn(out, labels)
 
             # Backward pass
