@@ -66,7 +66,8 @@ def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEnt
             loop.set_description(f"Epoch [{epoch+1}/{epochs}]")
             loop.set_postfix(loss=loss.item(), accuracy=accuracy.item())
 
-        print(f"Epoch {epoch+1} Summary - Loss: {np.mean(losses):.4f}, Accuracy: {np.mean(accuracies):.4f}")
+        print(
+            f"Epoch {epoch+1} Summary - Loss: {np.mean(losses):.4f}, Accuracy: {np.mean(accuracies):.4f}")
         evaluate(model, test_loader)
 
 
@@ -86,3 +87,4 @@ def evaluate(model, test_loader):
 
     avg_accuracy = np.mean(accuracies)
     print(f"Test Set Accuracy: {avg_accuracy:.4f}")
+    return avg_accuracy

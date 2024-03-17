@@ -1,11 +1,32 @@
 import torch
 from tqdm.auto import tqdm
 from .metrics import entropy, weight_avg, psi, best_sigma
-from .helpers import add_noise, restore_parameters, save_parameters
+from .training import add_noise, restore_parameters, save_parameters, evaluate
 from .plot import plot_entropy_prob, plot_weight_avg
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.manual_seed(0)
+
+
+@torch.no_grad()
+def evalute_robustness(model, test_loader, sigmas=[0.1, 0.25, 0.5], iters=10):
+    model.eval()
+    model.to(DEVICE)
+    result = []
+    loop = tqdm(sigmas, leave=False, disable=False)
+    for sigma in loop:
+        tmp = []
+        for _ in range(iters):
+            original_params = save_parameters(model)
+            add_noise(model, sigma)
+            acc = evaluate(model, test_loader)
+            tmp.append(acc)
+            restore_parameters(model, original_params)
+
+        acc_mean = sum(tmp) / len(tmp)
+        result.append((sigma, acc_mean))
+
+    return result
 
 
 @torch.no_grad()

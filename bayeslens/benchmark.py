@@ -9,8 +9,8 @@ from models.logistic import LogisticRegression
 from models.bayeslens_cnn import BayesLensCNN
 from models.bayeslens_vit import BayesLens_ViT
 from models.vit_b_16 import Pretrained_ViT
-from utils.helpers import train
-from utils.perturbation import perturbation
+from utils.training import train
+from utils.perturbation import perturbation, evalute_robustness
 
 logging.basicConfig(filename='training.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -71,7 +71,9 @@ def main():
 
         train(model, train_loader, val_loader, optimizer,
               epochs=args.epochs, lossfn=criterion, writer=writer)
-        perturbation(model, test_loader)
+        t = evalute_robustness(model, test_loader, iters=10)
+        print(t)
+        # perturbation(model, test_loader)
 
 
 if __name__ == "__main__":
