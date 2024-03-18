@@ -123,7 +123,7 @@ def load_MNIST(root_dir='../../extra/datasets', batch_size=16, ViT=False):
     train = torchvision.datasets.MNIST(
         root=root_dir, train=True, download=True, transform=DEFAULT_TRANSFORM_MNIST_VIT if ViT else DEFAULT_TRANSFORM_MNIST)
     test = torchvision.datasets.MNIST(
-        root=root_dir, train=True, download=True, transform=DEFAULT_TRANSFORM_MNIST_VIT if ViT else DEFAULT_TRANSFORM_MNIST)
+        root=root_dir, train=False, download=True, transform=DEFAULT_TRANSFORM_MNIST_VIT if ViT else DEFAULT_TRANSFORM_MNIST)
 
     train_batch = int(batch_size)
     test_batch = int(batch_size)
@@ -134,5 +134,7 @@ def load_MNIST(root_dir='../../extra/datasets', batch_size=16, ViT=False):
 
     train = DataLoader(train, batch_size=train_batch, shuffle=True)
     test = DataLoader(test, batch_size=test_batch, shuffle=True)
+
+    print(len(train), len(test))
 
     return train, test
