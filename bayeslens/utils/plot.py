@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
+from tqdm.auto import tqdm
 import numpy as np
+import imageio
+import os
 
 
 def plot_entropy_acc_cert(ent_acc_cert, sigma, iterations, SAVE_PLOT=False):
@@ -29,6 +32,53 @@ def plot_entropy_acc_cert(ent_acc_cert, sigma, iterations, SAVE_PLOT=False):
 
     plt.clf()
 
+def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=1, elev_increment=1, SAVE_GIF=True, gif_path='entropy_acc_cert_diagonal.gif'):
+    entropy, accuracy, certainty = zip(*ent_acc_cert)
+
+    # Setup figure and 3D axis
+    fig = plt.figure(figsize=(15, 9))
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Scatter plot
+    img = ax.scatter3D(accuracy, entropy, certainty, c=certainty, cmap='viridis')
+    ax.set_xlabel('Accuracy')
+    ax.set_ylabel('Entropy')
+    ax.set_zlabel('Certainty')
+    plt.title(f'(Accuracy, Entropy, Certainty) (σ: {sigma}, Iterations: {iterations})')
+    ax.set_xlim(-0.1, 1.1)
+    ax.set_ylim(-0.1, np.log(10) + 0.1)
+    ax.set_zlim(-0.1, 1.1)
+
+    # Directory for temporary image files
+    temp_dir = 'temp_images'
+    os.makedirs(temp_dir, exist_ok=True)
+
+    # Create frames
+    filenames = []
+    loop = tqdm(range(0, 360, angle_increment), desc='Creating frames', leave=False, disable=False)
+    for angle in loop:
+        elev = 30 + (angle * elev_increment / angle_increment) % 180  # Adjust elevation based on angle
+        ax.view_init(elev=elev, azim=angle)
+        filename = f'{temp_dir}/frame_{angle}.png'
+        plt.savefig(filename)
+        filenames.append(filename)
+
+    # Create GIF
+    if SAVE_GIF:
+        with imageio.get_writer(gif_path, mode='I') as writer:
+            for filename in filenames:
+                image = imageio.imread(filename)
+                writer.append_data(image)
+
+        # Optional: Cleanup
+        for filename in filenames:
+            os.remove(filename)
+        os.rmdir(temp_dir)
+    else:
+        # If not saving, just display the last frame
+        plt.show()
+
+    plt.close(fig)
 
 def plot_bounds(classes):
     """
