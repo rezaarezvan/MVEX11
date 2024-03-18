@@ -57,7 +57,7 @@ def weight_avg(data, window_size=0.25):
 
         # Calculate the weighted average for the filtered data
         weighted_average_filtered = sum(
-            p for (_, p) in (filtered_data)) / (weights)
+            p for (_, p, _) in (filtered_data)) / (weights)
 
         # Print the weighted average for the current window
         print(
@@ -97,7 +97,7 @@ def psi(data, _lambda=0.1):
     :param data: A list of tuples, where each tuple is (entropy, probability)
     :param _lambda: The lambda value to use in the calculation
     """
-    ent, pro = zip(*data)
+    ent, pro, _ = zip(*data)
     ent = np.array(ent)
     pro = np.array(pro)
 

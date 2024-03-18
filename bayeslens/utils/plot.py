@@ -2,22 +2,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_entropy_prob(ent_prob, sigma, acc, iterations, SAVE_PLOT=False):
+def plot_entropy_acc_cert(ent_acc_cert, sigma, iterations, SAVE_PLOT=False):
     """
-    Plots the list of probability/entropy parts on the x/y-axis respectively.
+    Plots the entropy, accuracy and certainty in a 3D plot.
     """
-    entropy, probability, certainty = zip(*ent_prob)
+    entropy, accuracy, certainty = zip(*ent_acc_cert)
 
     plt.figure(figsize=(15, 9))
     ax = plt.axes(projection='3d')
-    ax.scatter3D(probability, entropy, certainty, c=certainty, cmap='viridis')
-    plt.xlabel('Probability')
-    plt.ylabel('Entropy')
+    ax.scatter3D(accuracy, entropy, certainty, c=certainty, cmap='viridis')
+    ax.set_xlabel('Accuracy')
+    ax.set_ylabel('Entropy')
+    ax.set_zlabel('Certainty')
     plt.title(
-        f'Entropy to Probability (sigma={sigma}, iterations={iterations}, {acc}%)')
+        f'(Accuracy, Entropy, Certainty) (σ: {sigma}, Iterations: {iterations})')
     plt.grid()
-    plt.ylim(-0.1, np.log(10) + 0.1)
-    plt.xlim(-0.1, 1.1)
+    ax.set_xlim(-0.1, 1.1)
+    ax.set_ylim(-0.1, np.log(10) + 0.1)
+    ax.set_zlim(-0.1, 1.1)
+
     plot_bounds(classes=10)
     if SAVE_PLOT:
         plt.savefig(f'plots/entropies/entropy_prob_sigma_{sigma:.2f}.pdf')

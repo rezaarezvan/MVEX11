@@ -10,7 +10,7 @@ from models.bayeslens_cnn import BayesLensCNN
 from models.bayeslens_vit import BayesLens_ViT
 from models.vit_b_16 import Pretrained_ViT
 from utils.training import train
-from utils.perturbation import perturbation, evalute_robustness, test_robust
+from utils.perturbation import perturbation, evalute_robustness
 
 logging.basicConfig(filename='training.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -69,12 +69,12 @@ def main():
                 model, Pretrained_ViT) or isinstance(model, BayesLens_ViT) else False)
             val_loader = test_loader
 
-        # train(model, train_loader, val_loader, optimizer,
-        #      epochs=args.epochs, lossfn=criterion, writer=writer)
+        train(model, train_loader, val_loader, optimizer,
+              epochs=args.epochs, lossfn=criterion, writer=writer)
 
         # t = evalute_robustness(model, test_loader, iters=10)
         # print(t)
-        perturbation(model, test_loader)
+        perturbation(model, test_loader, iters=100)
         # sigmas = [0.1, 0.2, 0.5]
         # test_robust(model, test_loader, sigmas=sigmas, iters=100)
 

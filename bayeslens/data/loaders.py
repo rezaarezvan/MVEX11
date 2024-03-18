@@ -125,12 +125,12 @@ def load_MNIST(root_dir='../../extra/datasets', batch_size=16, ViT=False):
     test = torchvision.datasets.MNIST(
         root=root_dir, train=True, download=True, transform=DEFAULT_TRANSFORM_MNIST_VIT if ViT else DEFAULT_TRANSFORM_MNIST)
 
-    train_batch = batch_size
-    test_batch = batch_size
-    if not isinstance(batch_size, int):
-        print(batch_size)
-        train_batch = len(train)
-        test_batch = len(test)
+    train_batch = int(batch_size)
+    test_batch = int(batch_size)
+    # if not isinstance(batch_size, int):
+    #     print(batch_size)
+    #     train_batch = len(train)
+    #     test_batch = len(test)
 
     train = DataLoader(train, batch_size=train_batch, shuffle=True)
     test = DataLoader(test, batch_size=test_batch, shuffle=True)
