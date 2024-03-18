@@ -10,7 +10,7 @@ from models.bayeslens_cnn import BayesLensCNN
 from models.bayeslens_vit import BayesLens_ViT
 from models.vit_b_16 import Pretrained_ViT
 from utils.training import train
-from utils.perturbation import perturbation, evalute_robustness
+from utils.perturbation import perturbation, evalute_robustness, test_robust
 
 logging.basicConfig(filename='training.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -25,7 +25,7 @@ def parse_arguments():
                         help='Use the SODA dataset')
     parser.add_argument('-m', '--mnist', action='store_true',
                         help='Use the MNIST dataset')
-    parser.add_argument('-bs', '--batch_size', type=int, default=16,
+    parser.add_argument('-bs', '--batch_size', type=str, default='16',
                         help='Batch size for training and evaluation')
     parser.add_argument('-e', '--epochs', type=int, default=1,
                         help='Number of epochs to train')
@@ -69,11 +69,14 @@ def main():
                 model, Pretrained_ViT) or isinstance(model, BayesLens_ViT) else False)
             val_loader = test_loader
 
-        train(model, train_loader, val_loader, optimizer,
-              epochs=args.epochs, lossfn=criterion, writer=writer)
-        t = evalute_robustness(model, test_loader, iters=10)
-        print(t)
-        # perturbation(model, test_loader)
+        # train(model, train_loader, val_loader, optimizer,
+        #      epochs=args.epochs, lossfn=criterion, writer=writer)
+
+        # t = evalute_robustness(model, test_loader, iters=10)
+        # print(t)
+        perturbation(model, test_loader)
+        # sigmas = [0.1, 0.2, 0.5]
+        # test_robust(model, test_loader, sigmas=sigmas, iters=100)
 
 
 if __name__ == "__main__":

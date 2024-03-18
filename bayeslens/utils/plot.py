@@ -6,10 +6,11 @@ def plot_entropy_prob(ent_prob, sigma, acc, iterations, SAVE_PLOT=False):
     """
     Plots the list of probability/entropy parts on the x/y-axis respectively.
     """
-    entropy, probability = zip(*ent_prob)
+    entropy, probability, certainty = zip(*ent_prob)
 
     plt.figure(figsize=(15, 9))
-    plt.scatter(probability, entropy, alpha=0.1)
+    ax = plt.axes(projection='3d')
+    ax.scatter3D(probability, entropy, certainty, c=certainty, cmap='viridis')
     plt.xlabel('Probability')
     plt.ylabel('Entropy')
     plt.title(

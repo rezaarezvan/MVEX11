@@ -103,9 +103,18 @@ def load_SODA(dataset_path, batch_size=32, ViT=False):
     test = SODADataset(
         root_dir=dataset_path, split='test', transform=DEFAULT_TRANSFORM_SODA_VIT if ViT else DEFAULT_TRANSFORM_SODA)
 
-    train = DataLoader(train, batch_size=batch_size, shuffle=True)
-    val = DataLoader(val, batch_size=batch_size, shuffle=True)
-    test = DataLoader(test, batch_size=batch_size, shuffle=True)
+    train_batch = batch_size
+    val_batch = batch_size
+    test_batch = batch_size
+    if not isinstance(batch_size, int):
+        print(batch_size)
+        train_batch = len(train)
+        val_batch = len(val)
+        test_batch = len(test)
+
+    train = DataLoader(train, batch_size=train_batch, shuffle=True)
+    val = DataLoader(val, batch_size=val_batch, shuffle=True)
+    test = DataLoader(test, batch_size=test_batch, shuffle=True)
 
     return train, val, test
 
@@ -116,7 +125,14 @@ def load_MNIST(root_dir='../../extra/datasets', batch_size=16, ViT=False):
     test = torchvision.datasets.MNIST(
         root=root_dir, train=True, download=True, transform=DEFAULT_TRANSFORM_MNIST_VIT if ViT else DEFAULT_TRANSFORM_MNIST)
 
-    train = DataLoader(train, batch_size=batch_size, shuffle=True)
-    test = DataLoader(test, batch_size=batch_size, shuffle=True)
+    train_batch = batch_size
+    test_batch = batch_size
+    if not isinstance(batch_size, int):
+        print(batch_size)
+        train_batch = len(train)
+        test_batch = len(test)
+
+    train = DataLoader(train, batch_size=train_batch, shuffle=True)
+    test = DataLoader(test, batch_size=test_batch, shuffle=True)
 
     return train, test
