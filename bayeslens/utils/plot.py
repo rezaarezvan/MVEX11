@@ -24,9 +24,9 @@ def plot_entropy_acc_cert(ent_acc_cert, sigma, iterations, SAVE_PLOT=False):
     ax.set_ylim(-0.1, np.log(10) + 0.1)
     ax.set_zlim(-0.1, 1.1)
 
+    plot_bounds(classes=10)
     plt.savefig(
         f'plots/entropies/entropy_prob_sigma_{sigma:.2f}.pdf') if SAVE_PLOT else plt.show()
-    plot_bounds(classes=10)
 
 
 def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=5, elev_increment=1, SAVE_GIF=True, gif_path='entropy_acc_cert_diagonal.gif'):

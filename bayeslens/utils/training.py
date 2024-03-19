@@ -114,3 +114,4 @@ def evaluate(model, test_loader, writer=None, global_step=None):
         writer.add_scalar('Accuracy/test', avg_accuracy, global_step)
 
     print(f"Validation Accuracy: {avg_accuracy:.4f}")
+    return avg_accuracy
