@@ -10,7 +10,7 @@ from models.bayeslens_cnn import BayesLensCNN
 from models.bayeslens_vit import BayesLens_ViT
 from models.vit_b_16 import Pretrained_ViT
 from utils.training import train, save_model, load_model
-from utils.perturbation import perturbation, evalute_robustness
+from utils.perturbation import perturbation, evaluate_robustness
 
 writer = SummaryWriter('runs/')
 

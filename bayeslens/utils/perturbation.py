@@ -10,7 +10,7 @@ torch.manual_seed(0)
 
 
 @torch.no_grad()
-def evalute_robustness(model, test_loader, sigmas=[0.1, 0.25, 0.5], iters=10):
+def evaluate_robustness(model, test_loader, sigmas=[0.1, 0.25, 0.5], iters=10):
     model.eval()
     model.to(DEVICE)
     result = []
