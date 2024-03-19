@@ -1,8 +1,8 @@
+import os
+import imageio
+import numpy as np
 import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
-import numpy as np
-import imageio
-import os
 
 
 def plot_entropy_acc_cert(ent_acc_cert, sigma, iterations, SAVE_PLOT=False):
@@ -24,13 +24,10 @@ def plot_entropy_acc_cert(ent_acc_cert, sigma, iterations, SAVE_PLOT=False):
     ax.set_ylim(-0.1, np.log(10) + 0.1)
     ax.set_zlim(-0.1, 1.1)
 
+    plt.savefig(
+        f'plots/entropies/entropy_prob_sigma_{sigma:.2f}.pdf') if SAVE_PLOT else plt.show()
     plot_bounds(classes=10)
-    if SAVE_PLOT:
-        plt.savefig(f'plots/entropies/entropy_prob_sigma_{sigma:.2f}.pdf')
-    else:
-        plt.show()
 
-    plt.clf()
 
 def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=1, elev_increment=1, SAVE_GIF=True, gif_path='entropy_acc_cert_diagonal.gif'):
     entropy, accuracy, certainty = zip(*ent_acc_cert)
@@ -40,11 +37,13 @@ def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=1
     ax = fig.add_subplot(111, projection='3d')
 
     # Scatter plot
-    img = ax.scatter3D(accuracy, entropy, certainty, c=certainty, cmap='viridis')
+    img = ax.scatter3D(accuracy, entropy, certainty,
+                       c=certainty, cmap='viridis')
     ax.set_xlabel('Accuracy')
     ax.set_ylabel('Entropy')
     ax.set_zlabel('Certainty')
-    plt.title(f'(Accuracy, Entropy, Certainty) (σ: {sigma}, Iterations: {iterations})')
+    plt.title(f'(Accuracy, Entropy, Certainty) (σ: {
+              sigma}, Iterations: {iterations})')
     ax.set_xlim(-0.1, 1.1)
     ax.set_ylim(-0.1, np.log(10) + 0.1)
     ax.set_zlim(-0.1, 1.1)
@@ -55,9 +54,11 @@ def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=1
 
     # Create frames
     filenames = []
-    loop = tqdm(range(0, 360, angle_increment), desc='Creating frames', leave=False, disable=False)
+    loop = tqdm(range(0, 360, angle_increment),
+                desc='Creating frames', leave=False, disable=False)
     for angle in loop:
-        elev = 30 + (angle * elev_increment / angle_increment) % 180  # Adjust elevation based on angle
+        # Adjust elevation based on angle
+        elev = 30 + (angle * elev_increment / angle_increment) % 180
         ax.view_init(elev=elev, azim=angle)
         filename = f'{temp_dir}/frame_{angle}.png'
         plt.savefig(filename)
@@ -79,6 +80,7 @@ def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=1
         plt.show()
 
     plt.close(fig)
+
 
 def plot_bounds(classes):
     """
@@ -126,9 +128,4 @@ def plot_weight_avg(data, SAVE_PLOT=False):
         plt.plot(entropy, probability, marker='o', label=f'Sigma:{sigma:.2f}')
 
     plt.legend()
-    if SAVE_PLOT:
-        plt.savefig(f'plots/curves/curves.pdf')
-    else:
-        plt.show()
-
-    plt.clf()
+    plt.savefig(f'plots/curves/curves.pdf') if SAVE_PLOT else plt.show()

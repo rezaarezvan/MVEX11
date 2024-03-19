@@ -1,8 +1,8 @@
 import argparse
 import torch.nn as nn
 import torch.optim as optim
-import logging
-from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard.writer import SummaryWriter
+
 from data.loaders import load_SODA, load_MNIST
 from models.bayeslens_base import BayesLens
 from models.logistic import LogisticRegression
@@ -12,10 +12,7 @@ from models.vit_b_16 import Pretrained_ViT
 from utils.training import train
 from utils.perturbation import perturbation, evalute_robustness
 
-logging.basicConfig(filename='training.log', level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
-
-writer = SummaryWriter('runs/experiment_1')
+writer = SummaryWriter('runs/')
 
 
 def parse_arguments():
@@ -25,10 +22,10 @@ def parse_arguments():
                         help='Use the SODA dataset')
     parser.add_argument('-m', '--mnist', action='store_true',
                         help='Use the MNIST dataset')
-    parser.add_argument('-bs', '--batch_size', type=str, default='16',
-                        help='Batch size for training and evaluation')
-    parser.add_argument('-e', '--epochs', type=int, default=1,
-                        help='Number of epochs to train')
+    parser.add_argument('-bs', '--batch_size', default=32,
+                        type=int, help='Batch size for training and evaluation')
+    parser.add_argument('-e', '--epochs', default=1, type=int,
+                        help='Number of epochs to train the model')
     args = parser.parse_args()
     return args
 
@@ -72,11 +69,7 @@ def main():
         train(model, train_loader, val_loader, optimizer,
               epochs=args.epochs, lossfn=criterion, writer=writer)
 
-        # t = evalute_robustness(model, test_loader, iters=10)
-        # print(t)
-        perturbation(model, test_loader, iters=100)
-        # sigmas = [0.1, 0.2, 0.5]
-        # test_robust(model, test_loader, sigmas=sigmas, iters=100)
+        perturbation(model, test_loader, sigmas=0.1, iters=10)
 
 
 if __name__ == "__main__":

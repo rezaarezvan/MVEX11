@@ -37,6 +37,7 @@ def add_noise(model, sigma):
 
 def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEntropyLoss(), writer=None):
     model.to(DEVICE)
+    global_step = 0
     for epoch in range(epochs):
         model.train()
         loop = tqdm(train_loader, leave=True)
@@ -60,22 +61,24 @@ def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEnt
             accuracies.append(accuracy.item())
 
             if writer:
-                writer.add_scalar('Loss/train', loss.item(), epoch)
-                writer.add_scalar('Accuracy/train', accuracy.item(), epoch)
+                writer.add_scalar('Loss/train', loss.item(), global_step)
+                writer.add_scalar('Accuracy/train',
+                                  accuracy.item(), global_step)
 
             loop.set_description(f"Epoch [{epoch+1}/{epochs}]")
             loop.set_postfix(loss=loss.item(), accuracy=accuracy.item())
 
-        print(
-            f"Epoch {epoch+1} Summary - Loss: {np.mean(losses):.4f}, Accuracy: {np.mean(accuracies):.4f}")
-        evaluate(model, test_loader)
+            global_step += 1
+
+        evaluate(model, test_loader, writer, global_step)
+
+    if writer:
+        writer.close()
 
 
 @torch.no_grad()
-def evaluate(model, test_loader):
-    model.eval()
-    model.to(DEVICE)
-
+def evaluate(model, test_loader, writer=None, global_step=None):
+    model.eval().to(DEVICE)
     loop = tqdm(test_loader, leave=False)
     accuracies = []
     for images, labels in loop:
@@ -86,5 +89,7 @@ def evaluate(model, test_loader):
         accuracies.append(accuracy.item())
 
     avg_accuracy = np.mean(accuracies)
-    print(f"Test Set Accuracy: {avg_accuracy:.4f}")
-    return avg_accuracy
+    if writer and global_step is not None:
+        writer.add_scalar('Accuracy/test', avg_accuracy, global_step)
+
+    print(f"Validation Accuracy: {avg_accuracy:.4f}")
