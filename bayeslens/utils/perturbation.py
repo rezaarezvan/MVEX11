@@ -11,6 +11,10 @@ torch.manual_seed(0)
 
 @torch.no_grad()
 def evaluate_robustness(model, test_loader, sigmas=[0.1, 0.25, 0.5], iters=10):
+    """
+    Evaluate the robustness of the model by adding noise to the model parameters
+    and evaluating the models accuracy on the entire test set
+    """
     model.eval()
     model.to(DEVICE)
     result = []
@@ -32,6 +36,10 @@ def evaluate_robustness(model, test_loader, sigmas=[0.1, 0.25, 0.5], iters=10):
 
 @torch.no_grad()
 def evalute_perturbation(model, test_loader, sigma=0, iters=10):
+    """
+    Evaluate the perturbation of the model by adding noise to the model parameters
+    and calculating the entropy, accuracy and certainty of the model for each batch
+    """
     model.eval()
     model.to(DEVICE)
     result = []
@@ -66,7 +74,10 @@ def evalute_perturbation(model, test_loader, sigma=0, iters=10):
     return result
 
 
-def perturbation(model, test_loader, iters=10, sigmas=[0.1], lambdas=[0.1, 0.5, 1], entrop_window_size=0.1):
+def perturbation(model, test_loader, iters=10, sigmas=[0.1], lambdas=[0.1, 0.5, 1], entrop_window_size=0.1, SAVE_PLOT=True):
+    """
+    Main evaluation loop for the pertubation tests for the model
+    """
     entropies = []
     weighted_average = []
     psi_list = []
@@ -84,6 +95,6 @@ def perturbation(model, test_loader, iters=10, sigmas=[0.1], lambdas=[0.1, 0.5, 
         print('-----------------------------------\n')
 
     print(best_sigma(psi_list, sigmas))
-    plot_weight_avg(weighted_average, )
+    plot_weight_avg(weighted_average, SAVE_PLOT=SAVE_PLOT)
     for entropy, sigma in zip(entropies, sigmas):
-        plot_entropy_acc_cert(entropy, sigma, iters)
+        plot_entropy_acc_cert(entropy, sigma, iters, SAVE_PLOT=SAVE_PLOT)

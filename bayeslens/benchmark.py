@@ -23,11 +23,17 @@ model_choices = {
         }
 
 def list_of_models(arg):
-    print(arg)
+    """
+    Converts init_models argument from CLI from format 
+    "model1,model2,model3" to ["model1", "model2", "model3"]
+    """
     return arg.split(',')
 
 
 def parse_arguments():
+    """
+    Parse the arguments from the command line
+    """
     parser = argparse.ArgumentParser(
         description="Train and evaluate models on SODA or MNIST dataset.",
         formatter_class=argparse.RawTextHelpFormatter)
@@ -50,6 +56,8 @@ def parse_arguments():
                         help='Saves the models after training in their respective .pth')
     parser.add_argument('-t', '--train', action='store_true',
                         help='Option to train or just evaluate')
+    parser.add_argument('-sp', '--save_plots', action='store_true',
+                        help='Save the plots')
 
     args = parser.parse_args()
     return args
@@ -71,33 +79,40 @@ def main():
     if args.init_models:
         models = []
         for model in args.init_models:
+            if model not in model_choices:
+                print(f"Model {model} not found in model_choices")
+                continue
+
             model = model_choices[model](num_channels=num_channels,
                                          num_inputs=num_inputs, 
                                          num_classes=num_classes)
             models.append(model)
-
+        
 
     for model in models:
-        print(f"""Running Model: {model.__class__.__name__}""")
+        model_name = model.__class__.__name__
+        pth = f'models/model_dirs/{model_name}'
+        print(f"""Running Model: {model_name}""")
         optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
         criterion = nn.CrossEntropyLoss()
         if args.soda:
             train_loader, val_loader, test_loader = load_SODA(dataset_path, batch_size=args.batch_size, ViT=True if isinstance(
                 model, Pretrained_ViT) or isinstance(model, BayesLens_ViT) else False)
+            pth += '_SODA.pth'
         else:
             train_loader, test_loader = load_MNIST(dataset_path, batch_size=args.batch_size, ViT=True if isinstance(
                 model, Pretrained_ViT) or isinstance(model, BayesLens_ViT) else False)
             val_loader = test_loader
+            pth += '_MNIST.pth'
 
         if args.train and not args.load_weights:
             train(model, train_loader, val_loader, optimizer,
                   epochs=args.epochs, lossfn=criterion, writer=writer)
         if args.load_weights:
-            load_model(model, f'models/model_dirs/{model.__class__.__name__}.pth')
+            load_model(model, pth)
             model.eval()
         if args.save_weights:
-            save_model(model, f'models/model_dirs/{model.__class__.__name__}.pth')
-            
+            save_model(model, pth)
 
 if __name__ == "__main__":
     main()

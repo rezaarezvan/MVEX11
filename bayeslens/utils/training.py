@@ -7,22 +7,34 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def save_parameters(model):
+    """
+    Save the model parameters
+    """
     original_params = [param.clone() for param in model.parameters()]
     return original_params
 
 
 @torch.no_grad()
 def restore_parameters(model, original_params):
+    """
+    Restore the model parameters to the original values
+    """
     for param, original in zip(model.parameters(), original_params):
         param.copy_(original)
 
 
 def save_model(model, path):
+    """
+    Save model to path
+    """
     torch.save(model.state_dict(), path)
     print(f'Model saved to {path}')
 
 
 def load_model(model, path):
+    """
+    Load model from path
+    """
     model.load_state_dict(torch.load(path, map_location=DEVICE))
     print(f'Model loaded from {path}')
     return model
@@ -30,12 +42,18 @@ def load_model(model, path):
 
 @torch.no_grad()
 def add_noise(model, sigma):
+    """
+    Add noise to the model parameters
+    """
     for param in model.parameters():
         param += torch.randn_like(param) * sigma
     return model
 
 
 def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEntropyLoss(), writer=None):
+    """
+    Train the model on the given train- and evaluate on test-loaders
+    """
     model.to(DEVICE)
     global_step = 0
     for epoch in range(epochs):
@@ -78,6 +96,9 @@ def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEnt
 
 @torch.no_grad()
 def evaluate(model, test_loader, writer=None, global_step=None):
+    """
+    Evaluate given model on the test set
+    """
     model.eval().to(DEVICE)
     loop = tqdm(test_loader, leave=False)
     accuracies = []

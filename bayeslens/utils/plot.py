@@ -29,7 +29,10 @@ def plot_entropy_acc_cert(ent_acc_cert, sigma, iterations, SAVE_PLOT=False):
     plot_bounds(classes=10)
 
 
-def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=1, elev_increment=1, SAVE_GIF=True, gif_path='entropy_acc_cert_diagonal.gif'):
+def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=5, elev_increment=1, SAVE_GIF=True, gif_path='entropy_acc_cert_diagonal.gif'):
+    """
+    Plots the entropy, accuracy and certainty in a 3D plot, rotating around the diagonal.
+    """
     entropy, accuracy, certainty = zip(*ent_acc_cert)
 
     # Setup figure and 3D axis
