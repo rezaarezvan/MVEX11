@@ -32,9 +32,7 @@ def parse_arguments():
         description="Train and evaluate models on SODA or MNIST dataset.",
         formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-s', '--soda', action='store_true',
-                        help='Use the SODA dataset')
-    parser.add_argument('-m', '--mnist', action='store_true',
-                        help='Use the MNIST dataset')
+                        help='Using SODA dataset instead of MNIST')
     parser.add_argument('-bs', '--batch_size', default=32,
                         type=int, help='Batch size for training and evaluation')
     parser.add_argument('-e', '--epochs', default=1, type=int,
@@ -64,13 +62,11 @@ def main():
         num_classes = 6
         num_inputs = 3*256*256
         num_channels = 3
-    elif args.mnist:
+    else:
         dataset_path = '../extra/datasets/MNIST'
         num_classes = 10
         num_inputs = 28*28
         num_channels = 1
-    else:
-        raise ValueError("Either --soda or --mnist must be specified")
 
     if args.init_models:
         models = []
@@ -82,6 +78,7 @@ def main():
 
 
     for model in models:
+        print(f"""Running Model: {model.__class__.__name__}""")
         optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
         criterion = nn.CrossEntropyLoss()
         if args.soda:

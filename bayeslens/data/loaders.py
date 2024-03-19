@@ -107,7 +107,6 @@ def load_SODA(dataset_path, batch_size=32, ViT=False):
     val_batch = batch_size
     test_batch = batch_size
     if not isinstance(batch_size, int):
-        print(batch_size)
         train_batch = len(train)
         val_batch = len(val)
         test_batch = len(test)
@@ -132,7 +131,5 @@ def load_MNIST(root_dir='../extra/datasets', batch_size=16, ViT=False):
                        shuffle=True, num_workers=4, pin_memory=True)
     test = DataLoader(test, batch_size=batch_size,
                       shuffle=True, num_workers=4, pin_memory=True)
-
-    print(len(train), len(test))
 
     return train, test

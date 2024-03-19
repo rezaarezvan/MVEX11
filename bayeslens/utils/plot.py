@@ -42,8 +42,8 @@ def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=1
     ax.set_xlabel('Accuracy')
     ax.set_ylabel('Entropy')
     ax.set_zlabel('Certainty')
-    plt.title(f'(Accuracy, Entropy, Certainty) (σ: {
-              sigma}, Iterations: {iterations})')
+    plt.title(f"""(Accuracy, Entropy, Certainty) (σ: {
+              sigma}, Iterations: {iterations})""")
     ax.set_xlim(-0.1, 1.1)
     ax.set_ylim(-0.1, np.log(10) + 0.1)
     ax.set_zlim(-0.1, 1.1)
