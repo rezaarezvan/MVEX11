@@ -4,7 +4,7 @@ from .BayesianLinear import BayesianLinear
 
 
 class BayesLens_ViT(nn.Module):
-    def __init__(self, num_classes=6):
+    def __init__(self, num_classes=6, num_inputs=None, num_channels=None):
         super(BayesLens_ViT, self).__init__()
         self.vit = vit_b_16(weights=ViT_B_16_Weights.DEFAULT)
         self.classifier = BayesianLinear(
