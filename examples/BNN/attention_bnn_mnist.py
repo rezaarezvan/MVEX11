@@ -41,25 +41,29 @@ class AttentionLayer(nn.Module):
 
 
 class AttentionLayer(nn.Module):
-    def __init__(self, input_dim, hidden_dim):
+    def __init__(self, input_dim, heads, hidden_dim, dropout):
         super(AttentionLayer, self).__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
+        self.heads = heads
+        self.attention = nn.MultiheadAttention(embed_dim=hidden_dim, num_heads=heads, dropout=dropout)
 
         # Linear spaces
-        self.to_query = nn.Linear(input_dim, hidden_dim)
-        self.to_key = nn.Linear(input_dim, hidden_dim)
-        self.to_value = nn.Linear(input_dim, hidden_dim)
+        self.q = nn.Linear(input_dim, hidden_dim)
+        self.k = nn.Linear(input_dim, hidden_dim)
+        self.v = nn.Linear(input_dim, hidden_dim)
 
     def forward(self, x):
-        Q = self.to_query(x)
-        K = self.to_key(x)
-        V = self.to_value(x)
+        q = self.q(x)
+        k = self.k(x)
+        v = self.v(x)
         # Attention formula straight off
-        attention_scores = torch.matmul(Q, K.transpose(-2, -1)) / (self.hidden_dim ** 0.5)
+        attention_scores = torch.matmul(q, k.transpose(-2, -1)) / (self.hidden_dim ** 0.5)
         attention = F.softmax(attention_scores, dim=-1)
-        out = torch.matmul(attention, V)
-
+        out = torch.matmul(attention, v)
+        attn_outp, attn_outp_weights = self.attention(q, k, v)
+        print(attention_scores, attention)
+        print(attn_outp, attn_outp_weights)
         return out
 
 
