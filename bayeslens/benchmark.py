@@ -4,7 +4,6 @@ import torch.optim as optim
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from data.loaders import load_SODA, load_MNIST
-from models.bayeslens_base import BayesLens
 from models.logistic import LogisticRegression
 from models.bayeslens_cnn import BayesLensCNN
 from models.bayeslens_vit import BayesLens_ViT
@@ -15,16 +14,16 @@ from utils.perturbation import perturbation, evaluate_robustness
 writer = SummaryWriter('runs/')
 
 model_choices = {
-        'log': LogisticRegression,
-        'pv' : Pretrained_ViT,
-        'bv' : BayesLens_ViT,
-        'bc' : BayesLensCNN,
-        'b'  : BayesLens
-        }
+    'log': LogisticRegression,
+    'pv': Pretrained_ViT,
+    'bv': BayesLens_ViT,
+    'bc': BayesLensCNN,
+}
+
 
 def list_of_models(arg):
     """
-    Converts init_models argument from CLI from format 
+    Converts init_models argument from CLI from format
     "model1,model2,model3" to ["model1", "model2", "model3"]
     """
     return arg.split(',')
@@ -43,12 +42,11 @@ def parse_arguments():
                         type=int, help='Batch size for training and evaluation')
     parser.add_argument('-e', '--epochs', default=1, type=int,
                         help='Number of epochs to train the model')
-    parser.add_argument('-im', '--init_models', type=list_of_models, default=['log'],
+    parser.add_argument('-m', '--models', type=list_of_models, default=['log'],
                         help="Different Models to test/train\n"
                         "pv  = Pretrained_ViT\n"
                         "bv  = BayesLens_ViT\n"
                         "bc  = BayesLensCNN\n"
-                        "b   = BayesLens\n"
                         "log = LogisticRegression")
     parser.add_argument('-lw', '--load_weights', action='store_true',
                         help='Load weights for initalized models')
@@ -76,18 +74,16 @@ def main():
         num_inputs = 28*28
         num_channels = 1
 
-    if args.init_models:
-        models = []
-        for model in args.init_models:
-            if model not in model_choices:
-                print(f"Model {model} not found in model_choices")
-                continue
+    models = []
+    for model in args.models:
+        if model not in model_choices:
+            print(f"Model {model} not found in model_choices")
+            continue
 
-            model = model_choices[model](num_channels=num_channels,
-                                         num_inputs=num_inputs, 
-                                         num_classes=num_classes)
-            models.append(model)
-        
+        model = model_choices[model](num_channels=num_channels,
+                                     num_inputs=num_inputs,
+                                     num_classes=num_classes)
+        models.append(model)
 
     for model in models:
         model_name = model.__class__.__name__
@@ -113,6 +109,7 @@ def main():
             model.eval()
         if args.save_weights:
             save_model(model, pth)
+
 
 if __name__ == "__main__":
     main()

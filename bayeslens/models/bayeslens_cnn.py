@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-from .BayesianLinear import BayesianLinear
-from math import sqrt
 
 
 class ConvBlock(nn.Module):
@@ -20,7 +18,7 @@ class ConvBlock(nn.Module):
 
 
 class BayesLensCNN(nn.Module):
-    def __init__(self, num_channels=3, num_inputs=256*256*3, num_classes=6, dropout_rate=0.5):
+    def __init__(self, num_channels=3, num_inputs=256*256*3, num_classes=6, dropout_rate=0.2):
         super(BayesLensCNN, self).__init__()
         self.dropout = nn.Dropout(dropout_rate)
         self.feature_extractor = nn.Sequential(
@@ -28,14 +26,14 @@ class BayesLensCNN(nn.Module):
             ConvBlock(16, 32),
         )
         self.flatten = nn.Flatten()
-        img_size = int(sqrt(num_inputs/num_channels))
+        img_size = (num_inputs/num_channels)**0.5
         with torch.no_grad():
             self._dummy_input = torch.zeros(
                 1, num_channels, img_size, img_size)
             self._flattened_size = self._forward_features(
                 self._dummy_input).shape[1]
 
-        self.classifier = BayesianLinear(self._flattened_size, num_classes)
+        self.classifier = nn.Linear(self._flattened_size, num_classes)
 
     def _forward_features(self, x):
         x = self.feature_extractor(x)
