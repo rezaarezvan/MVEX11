@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from torch.distributions import Categorical
 from .model import save_model_parameters, restore_model_parameters
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available()  else 'cpu')
 torch.manual_seed(0)
 
 

@@ -10,7 +10,7 @@ from utils.entrop import test_model_noise, calculate_weighted_averages, plot_wei
 from utils.model import load_model, save_model
 
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
 DEFAULT_MODEL_PATH = 'model_state/entropy_mnist.pth'
 SAVE_PLOT = True if '-s' in sys.argv else False
 LOAD_WEIGHTS = True if '-lw' in sys.argv else False
@@ -129,8 +129,7 @@ def main():
         model = load_model(model, DEFAULT_MODEL_PATH)
         accuracy = test_model(model, test)
     else:
-        accuracy = train_model(
-            model, train, test, optimizer, criterion, epochs=1)
+        accuracy = train_model(model, train, test, optimizer, criterion, epochs=1)
 
     if SAVE_WEIGHTS:
         save_model(model, DEFAULT_MODEL_PATH)
