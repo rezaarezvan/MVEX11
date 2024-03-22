@@ -109,7 +109,7 @@ def main():
             model.eval()
         if args.save_weights:
             save_model(model, pth)
-        perturbation(model, test_loader)
+        perturbation(model, test_loader, SAVE_PLOT=args.save_plots)
 
 
 if __name__ == "__main__":
