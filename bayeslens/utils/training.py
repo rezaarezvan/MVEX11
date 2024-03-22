@@ -1,3 +1,4 @@
+import os
 import torch
 import numpy as np
 import torch.nn as nn
@@ -25,8 +26,9 @@ def restore_parameters(model, original_params):
 
 def save_model(model, path):
     """
-    Save model to path
+    Save model to path, if the path does not exist, it will be created
     """
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     torch.save(model.state_dict(), path)
     print(f'Model saved to {path}')
 
