@@ -3,7 +3,7 @@ import torch.nn as nn
 from tqdm.auto import tqdm
 from .metrics import entropy, weight_avg, psi, best_sigma
 from .training import add_noise, restore_parameters, save_parameters, evaluate
-from .plot import plot_entropy_acc_cert, plot_weight_avg
+from .plot import plot_entropy_acc_cert, plot_weight_avg, barplot_entropy_acc
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.manual_seed(0)
@@ -45,9 +45,12 @@ def evalute_perturbation(model, test_loader, sigma=0, iters=10):
     result = []
 
     loop = tqdm(test_loader, leave=False)
+    labels_l = []
     for images, labels in loop:
         predictions = []
         probs = []
+        for label in labels:
+            labels_l.append(label)
         images, labels = images.to(DEVICE), labels.to(DEVICE)
         for _ in range(iters):
             original_params = save_parameters(model)
@@ -71,10 +74,10 @@ def evalute_perturbation(model, test_loader, sigma=0, iters=10):
         for e, a, c in zip(ent, accuracy, prob):
             result.append((e.item(), a.item(), c.item()))
 
-    return result
+    return result, labels_l
 
 
-def perturbation(model, test_loader, iters=10, sigmas=[0.1], lambdas=[0.1, 0.5, 1], entrop_window_size=0.1, SAVE_PLOT=True):
+def perturbation(model, test_loader, iters=100, sigmas=[20], lambdas=[0.1, 0.5, 1], entrop_window_size=0.1, SAVE_PLOT=False):
     """
     Main evaluation loop for the pertubation tests for the model
     """
@@ -84,7 +87,7 @@ def perturbation(model, test_loader, iters=10, sigmas=[0.1], lambdas=[0.1, 0.5, 
 
     for sigma in sigmas:
         print(f"σ: {sigma}")
-        entropy = evalute_perturbation(
+        entropy, labels_l = evalute_perturbation(
             model, test_loader, sigma=sigma, iters=iters)
         weighted_average.append(
             (weight_avg(entropy, window_size=entrop_window_size), sigma))
@@ -97,4 +100,5 @@ def perturbation(model, test_loader, iters=10, sigmas=[0.1], lambdas=[0.1, 0.5, 
     print(best_sigma(psi_list, sigmas))
     plot_weight_avg(weighted_average, SAVE_PLOT=SAVE_PLOT)
     for entropy, sigma in zip(entropies, sigmas):
-        plot_entropy_acc_cert(entropy, sigma, iters, SAVE_PLOT=SAVE_PLOT)
+        # plot_entropy_acc_cert(entropy,labels_l, sigma, iters, SAVE_PLOT=SAVE_PLOT)
+        barplot_entropy_acc(entropy, labels_l)

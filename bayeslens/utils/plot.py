@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
 
 
-def plot_entropy_acc_cert(ent_acc_cert, sigma, iterations, SAVE_PLOT=False):
+def plot_entropy_acc_cert(ent_acc_cert,labels, sigma, iterations, SAVE_PLOT=False):
     """
     Plots the entropy, accuracy and certainty in a 3D plot.
     """
@@ -13,7 +13,7 @@ def plot_entropy_acc_cert(ent_acc_cert, sigma, iterations, SAVE_PLOT=False):
 
     plt.figure(figsize=(15, 9))
     ax = plt.axes(projection='3d')
-    ax.scatter3D(accuracy, entropy, certainty, c=certainty, cmap='viridis')
+    im = ax.scatter3D(accuracy, entropy, certainty, c=labels, cmap='tab10')
     ax.set_xlabel('Accuracy')
     ax.set_ylabel('Entropy')
     ax.set_zlabel('Certainty')
@@ -23,10 +23,37 @@ def plot_entropy_acc_cert(ent_acc_cert, sigma, iterations, SAVE_PLOT=False):
     ax.set_xlim(-0.1, 1.1)
     ax.set_ylim(-0.1, np.log(10) + 0.1)
     ax.set_zlim(-0.1, 1.1)
+    plt.colorbar(im, ax=ax)
 
     plot_bounds(classes=10)
     plt.savefig(
         f'plots/entropies/entropy_prob_sigma_{sigma:.2f}.pdf') if SAVE_PLOT else plt.show()
+
+def barplot_entropy_acc(ent_acc_cert, labels):
+    _, acc, cert = zip(*ent_acc_cert)
+    nc_list = list(np.unique(labels))
+    num_classes = len(nc_list)
+
+    tmp = zip(acc, cert, labels)
+    avg_acc = [0 for _ in range(num_classes)]
+    avg_cert = [0 for _ in range(num_classes)]
+    
+    for a, c, l in tmp:
+        avg_acc[l] += a
+        avg_cert[l] += c
+
+    for i in range(num_classes):
+        l = len([x for x in labels if x == i])
+        avg_acc[i] = (avg_acc[i]/l)*100
+        avg_cert[i] = (avg_cert[i]/l)*100
+    
+    plt.figure(figsize=(15, 9))
+    plt.bar(nc_list, avg_acc, color='maroon', width=0.7)
+    plt.bar(nc_list, avg_cert, color='blue', width=0.1)
+    plt.ylabel("Certainty/Accuracy (%)")
+    plt.xlabel("Label (0-9)")
+    plt.title("Certainty per label")
+    plt.show()
 
 
 def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=5, elev_increment=1, SAVE_GIF=True, gif_path='entropy_acc_cert_diagonal.gif'):
