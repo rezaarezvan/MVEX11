@@ -130,6 +130,6 @@ def load_MNIST(root_dir='../extra/datasets', batch_size=16, ViT=False):
     train = DataLoader(train, batch_size=batch_size,
                        shuffle=True, num_workers=4, pin_memory=True)
     test = DataLoader(test, batch_size=batch_size,
-                      shuffle=True, num_workers=4, pin_memory=True)
+                      shuffle=False, num_workers=4, pin_memory=True)
 
     return train, test
