@@ -71,10 +71,7 @@ def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=5
     # Setup figure and 3D axis
     fig = plt.figure(figsize=(15, 9))
     ax = fig.add_subplot(111, projection='3d')
-
-    # Scatter plot
-    img = ax.scatter3D(accuracy, entropy, certainty,
-                       c=certainty, cmap='viridis')
+    ax.scatter3D(accuracy, entropy, certainty, c=certainty, cmap='viridis')
     ax.set_xlabel('Accuracy')
     ax.set_ylabel('Entropy')
     ax.set_zlabel('Certainty')
@@ -84,35 +81,31 @@ def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=5
     ax.set_ylim(-0.1, np.log(10) + 0.1)
     ax.set_zlim(-0.1, 1.1)
 
-    # Directory for temporary image files
-    temp_dir = 'temp_images'
+    temp_dir = 'imgs/temp'
     os.makedirs(temp_dir, exist_ok=True)
 
-    # Create frames
     filenames = []
     loop = tqdm(range(0, 360, angle_increment),
                 desc='Creating frames', leave=False, disable=False)
     for angle in loop:
-        # Adjust elevation based on angle
         elev = 30 + (angle * elev_increment / angle_increment) % 180
         ax.view_init(elev=elev, azim=angle)
         filename = f'{temp_dir}/frame_{angle}.png'
         plt.savefig(filename)
         filenames.append(filename)
 
-    # Create GIF
     if SAVE_GIF:
-        with imageio.get_writer(gif_path, mode='I') as writer:
+        path = 'imgs/gifs'
+        os.makedirs(path, exist_ok=True)
+        with imageio.get_writer(path, mode='I') as writer:
             for filename in filenames:
                 image = imageio.imread(filename)
                 writer.append_data(image)
 
-        # Optional: Cleanup
         for filename in filenames:
             os.remove(filename)
         os.rmdir(temp_dir)
     else:
-        # If not saving, just display the last frame
         plt.show()
 
     plt.close(fig)
@@ -164,4 +157,5 @@ def plot_weight_avg(data, SAVE_PLOT=False):
         plt.plot(entropy, probability, marker='o', label=f'Sigma:{sigma:.2f}')
 
     plt.legend()
-    plt.savefig(f'plots/curves/curves.pdf') if SAVE_PLOT else plt.show()
+    os.makedirs('imgs/curves', exist_ok=True)
+    plt.savefig(f'imgs/curves/curves.pdf') if SAVE_PLOT else plt.show()
