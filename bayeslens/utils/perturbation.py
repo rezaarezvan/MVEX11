@@ -45,12 +45,9 @@ def evalute_perturbation(model, test_loader, sigma=0, iters=10):
     result = []
 
     loop = tqdm(test_loader, leave=False)
-    labels_l = []
     for images, labels in loop:
         predictions = []
         probs = []
-        for label in labels:
-            labels_l.append(label)
         images, labels = images.to(DEVICE), labels.to(DEVICE)
         for _ in range(iters):
             original_params = save_parameters(model)
@@ -74,31 +71,35 @@ def evalute_perturbation(model, test_loader, sigma=0, iters=10):
         for e, a, c in zip(ent, accuracy, prob):
             result.append((e.item(), a.item(), c.item()))
 
-    return result, labels_l
+    return result
 
 
-def perturbation(model, test_loader, iters=100, sigmas=[20], lambdas=[0.1, 0.5, 1], entrop_window_size=0.1, SAVE_PLOT=False):
+def perturbation(model, test_loader, iters=100, sigmas=[0.1, 0.2, 0.3], lambdas=[0.1, 0.5, 1], entrop_window_size=0.1, SAVE_PLOT=False):
     """
     Main evaluation loop for the pertubation tests for the model
     """
-    entropies = []
+    EAC = []
     weighted_average = []
     psi_list = []
 
     for sigma in sigmas:
         print(f"σ: {sigma}")
-        entropy, labels_l = evalute_perturbation(
+        ent_acc_cert = evalute_perturbation(
             model, test_loader, sigma=sigma, iters=iters)
         weighted_average.append(
-            (weight_avg(entropy, window_size=entrop_window_size), sigma))
-        entropies.append(entropy)
+            (weight_avg(ent_acc_cert, window_size=entrop_window_size), sigma))
+        EAC.append(ent_acc_cert)
         for _lambda in lambdas:
-            print(f"λ: {_lambda}, ψ: {psi(entropy, _lambda=_lambda)}")
-        psi_list.append(psi(entropy))
+            print(f"λ: {_lambda}, ψ: {psi(ent_acc_cert, _lambda=_lambda)}")
+            psi_list.append(psi(ent_acc_cert, _lambda=_lambda))
         print('-----------------------------------\n')
 
-    print(best_sigma(psi_list, sigmas))
+    best_psi, best_sigma = max_psi_sigma(psi_list, sigmas)
+    print(f"Max: (ψ: {best_psi}, σ: {best_sigma})")
     plot_weight_avg(weighted_average, SAVE_PLOT=SAVE_PLOT)
-    for entropy, sigma in zip(entropies, sigmas):
-        # plot_entropy_acc_cert(entropy,labels_l, sigma, iters, SAVE_PLOT=SAVE_PLOT)
-        barplot_entropy_acc(entropy, labels_l)
+
+    for ent_acc_cert, sigma in zip(EAC, sigmas):
+        plot_entropy_acc_cert(ent_acc_cert, test_loader.dataset.targets, sigma,
+                              iters, SAVE_PLOT=SAVE_PLOT)
+        barplot_ent_acc_cert(ent_acc_cert, test_loader.dataset.targets, sigma,
+                             SAVE_PLOT=SAVE_PLOT)
