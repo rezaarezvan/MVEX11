@@ -3,9 +3,10 @@ import imageio
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
+from collections import defaultdict
 
 
-def plot_entropy_acc_cert(ent_acc_cert,labels, sigma, iterations, SAVE_PLOT=False):
+def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=False):
     """
     Plots the entropy, accuracy and certainty in a 3D plot.
     """
@@ -26,37 +27,42 @@ def plot_entropy_acc_cert(ent_acc_cert,labels, sigma, iterations, SAVE_PLOT=Fals
     plt.colorbar(im, ax=ax)
 
     plot_bounds(classes=10)
+    os.makedirs('imgs/entropies', exist_ok=True)
     plt.savefig(
-        f'plots/entropies/entropy_prob_sigma_{sigma:.2f}.pdf') if SAVE_PLOT else plt.show()
+        f'imgs/entropies/entropy_prob_sigma_{sigma:.2f}.pdf') if SAVE_PLOT else plt.show()
 
-def barplot_entropy_acc(ent_acc_cert, labels):
-    _, acc, cert = zip(*ent_acc_cert)
-    nc_list = list(np.unique(labels))
-    num_classes = len(nc_list)
 
-    tmp = zip(acc, cert, labels)
-    avg_acc = [0 for _ in range(num_classes)]
-    avg_cert = [0 for _ in range(num_classes)]
-    
-    for a, c, l in tmp:
-        avg_acc[l] += a
-        avg_cert[l] += c
+def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False):
+    sums = defaultdict(lambda: np.zeros(3))
+    counts = defaultdict(int)
 
-    for i in range(num_classes):
-        l = len([x for x in labels if x == i])
-        avg_acc[i] = (avg_acc[i]/l)*100
-        avg_cert[i] = (avg_cert[i]/l)*100
-    
+    ent, acc, cert = map(np.array, zip(*ent_acc_cert))
+    labels = np.array(labels)
+
+    for label, entropy, accuracy, certainty in zip(labels, ent, acc, cert):
+        sums[label] += [entropy, accuracy, certainty]
+        counts[label] += 1
+
+    averages = {label: sum / counts[label] for label, sum in sums.items()}
+    avg_ent, avg_acc, avg_cert = zip(
+        *[averages[label] for label in sorted(averages)])
+    avg_acc, avg_cert = np.array(avg_acc) * 100, np.array(avg_cert) * 100
+    num_classes = sorted(averages)
+
     plt.figure(figsize=(15, 9))
-    plt.bar(nc_list, avg_acc, color='maroon', width=0.7)
-    plt.bar(nc_list, avg_cert, color='blue', width=0.1)
-    plt.ylabel("Certainty/Accuracy (%)")
-    plt.xlabel("Label (0-9)")
-    plt.title("Certainty per label")
-    plt.show()
+    plt.bar(num_classes, avg_acc, color='maroon', width=0.7)
+    plt.bar(num_classes, avg_cert, color='blue', width=0.1)
+    plt.bar(num_classes, avg_ent, color='green', width=0.3)
+    plt.xlabel('Classes')
+    plt.ylabel('Percentage')
+    plt.title('Average Accuracy, Certainty, and Entropy per Class')
+    plt.legend(['Accuracy', 'Certainty', 'Entropy'])
+    os.makedirs('imgs/entropies', exist_ok=True)
+    plt.savefig(
+        f'imgs/entropies/avg_ent_acc_cert_sigma_{sigma:.2f}.pdf') if SAVE_PLOT else plt.show()
 
 
-def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=5, elev_increment=1, SAVE_GIF=True, gif_path='entropy_acc_cert_diagonal.gif'):
+def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=5, elev_increment=1, SAVE_GIF=True):
     """
     Plots the entropy, accuracy and certainty in a 3D plot, rotating around the diagonal.
     """
