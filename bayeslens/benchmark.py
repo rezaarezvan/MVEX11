@@ -9,7 +9,7 @@ from models.bayeslens_cnn import BayesLensCNN
 from models.bayeslens_vit import BayesLens_ViT
 from models.vit_b_16 import Pretrained_ViT
 from utils.training import train, save_model, load_model
-from utils.perturbation import perturbation, evaluate_robustness
+from utils.perturbation import perturbation, evaluateMixUp, evalute_perturbation, evaluate_robustness
 
 writer = SummaryWriter('runs/')
 
@@ -109,6 +109,7 @@ def main():
             model.eval()
         if args.save_weights:
             save_model(model, pth)
+        evaluateMixUp(model, test_loader)
 
 
 if __name__ == "__main__":

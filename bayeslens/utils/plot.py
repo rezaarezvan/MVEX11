@@ -5,6 +5,25 @@ import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
 
 
+
+def plot_most_often_similar(predictions_and_correct_label, threshold, labels):
+    """
+    Plots the most often interchanged predictions.
+    """
+    # Takes out the lists where |labels| amount of classes account for more
+    # than |threshold| amount of predictions, for example:
+    # (([1,2,1,2,1,2,1,3] 1), 0.8, 2)
+    # 1 and 2 account for more than 80% of the contents of the list
+    # and were mistaken for each other.
+
+
+
+
+    return None
+
+
+
+
 def plot_entropy_acc_cert(ent_acc_cert, sigma, iterations, SAVE_PLOT=False):
     """
     Plots the entropy, accuracy and certainty in a 3D plot.
