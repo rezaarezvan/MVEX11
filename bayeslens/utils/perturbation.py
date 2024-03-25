@@ -38,7 +38,7 @@ def evaluate_robustness(model, test_loader, sigmas=[0.1, 0.25, 0.5], iters=10):
 
 
 @torch.no_grad()
-def evaluateMixUp(model, test_loader, sigma=0.01, iterations=10):
+def evaluateMixUp(model, test_loader, sigma=0.3, iterations=20):
     """
     Computes to what degree the model mixes up the label (Calculates the entropy
     without the given correct label)
@@ -82,7 +82,7 @@ def evaluateMixUp(model, test_loader, sigma=0.01, iterations=10):
 
 
 
-    plot_most_often_similar(matrix_with_correct_label, 0, 10)
+    plot_most_often_similar(matrix_with_correct_label, 0, 2)
 
 
 

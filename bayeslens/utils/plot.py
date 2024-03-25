@@ -2,6 +2,7 @@ import os
 import imageio
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
 from tqdm.auto import tqdm
 
 
@@ -9,6 +10,8 @@ from tqdm.auto import tqdm
 def plot_most_often_similar(predictions_and_correct_label, threshold, labels):
     """
     Plots the most often interchanged predictions.
+    Args:
+        labels: Integer amount of labels to compare
     """
     # Takes out the lists where |labels| amount of classes account for more
     # than |threshold| amount of predictions, for example:
@@ -16,9 +19,33 @@ def plot_most_often_similar(predictions_and_correct_label, threshold, labels):
     # 1 and 2 account for more than 80% of the contents of the list
     # and were mistaken for each other.
 
+    # Remove prediction instance if one label is  80% majority
+    frequency = []
+    remove_majority = 0.8*len(predictions_and_correct_label[0][0])
 
+    # Could use some testing
+    for instance, label in predictions_and_correct_label:
+        occurrence_list = torch.bincount(instance)
+        add_to_frequency = True
+        for occurrence in occurrence_list:
+            if occurrence >= remove_majority:
+                add_to_frequency = False
+                continue
+        if add_to_frequency:
+            frequency.append(occurrence_list)
 
+    print(frequency)
+    print("newprint")
+    pairs_of_interest = []
+    elements_of_interest = []
+    for prediction in frequency:
+        add_to_interest = True
+        for element1 in prediction:
+            for element2 in prediction:
+                if element1 + element2 > threshold*remove_majority:
+                    pairs_of_interest.append(prediction)
 
+    print(pairs_of_interest)
     return None
 
 
