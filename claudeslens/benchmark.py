@@ -5,8 +5,8 @@ from torch.utils.tensorboard.writer import SummaryWriter
 
 from data.loaders import load_SODA, load_MNIST
 from models.logistic import LogisticRegression
-from models.bayeslens_cnn import BayesLensCNN
-from models.bayeslens_vit import BayesLens_ViT
+from models.claudeslens_cnn import ClaudesLensCNN
+from models.claudeslens_vit import ClaudesLens_ViT
 from models.vit_b_16 import Pretrained_ViT
 from utils.training import train, save_model, load_model
 from utils.perturbation import evalute_weight_perturbation, perturbation, evaluate_robustness
@@ -16,8 +16,8 @@ writer = SummaryWriter('runs/')
 model_choices = {
     'log': LogisticRegression,
     'pv': Pretrained_ViT,
-    'bv': BayesLens_ViT,
-    'bc': BayesLensCNN,
+    'cv': ClaudesLens_ViT,
+    'cc': ClaudesLensCNN,
 }
 
 
@@ -45,8 +45,8 @@ def parse_arguments():
     parser.add_argument('-m', '--models', type=list_of_models, default=['log'],
                         help="Different Models to test/train\n"
                         "pv  = Pretrained_ViT\n"
-                        "bv  = BayesLens_ViT\n"
-                        "bc  = BayesLensCNN\n"
+                        "cv  = ClaudesLens_ViT\n"
+                        "cc  = ClaudesLensCNN\n"
                         "log = LogisticRegression")
     parser.add_argument('-lw', '--load_weights', action='store_true',
                         help='Load weights for initalized models')
@@ -93,11 +93,11 @@ def main():
         criterion = nn.CrossEntropyLoss()
         if args.soda:
             train_loader, val_loader, test_loader = load_SODA(dataset_path, batch_size=args.batch_size, ViT=True if isinstance(
-                model, Pretrained_ViT) or isinstance(model, BayesLens_ViT) else False)
+                model, Pretrained_ViT) or isinstance(model, ClaudesLens_ViT) else False)
             pth += '_SODA.pth'
         else:
             train_loader, test_loader = load_MNIST(dataset_path, batch_size=args.batch_size, ViT=True if isinstance(
-                model, Pretrained_ViT) or isinstance(model, BayesLens_ViT) else False)
+                model, Pretrained_ViT) or isinstance(model, ClaudesLens_ViT) else False)
             val_loader = test_loader
             pth += '_MNIST.pth'
 

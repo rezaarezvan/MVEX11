@@ -17,9 +17,9 @@ class ConvBlock(nn.Module):
         return x
 
 
-class BayesLensCNN(nn.Module):
+class ClaudesLensCNN(nn.Module):
     def __init__(self, num_channels=3, num_inputs=256*256*3, num_classes=6, dropout_rate=0.2):
-        super(BayesLensCNN, self).__init__()
+        super(ClaudesLensCNN, self).__init__()
         self.dropout = nn.Dropout(dropout_rate)
         self.feature_extractor = nn.Sequential(
             ConvBlock(num_channels, 16),

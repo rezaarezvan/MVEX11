@@ -7,12 +7,12 @@ directory = Path(__file__).resolve().parent
 with open(directory / 'README.md', encoding='utf-8') as f:
     long_description = f.read()
 
-setup(name='bayeslens',
+setup(name='claudeslens',
       version='0.0.1',
       license='MIT',
       long_description=long_description,
       long_description_content_type='text/markdown',
-      packages=['bayeslens'],
+      packages=['claudeslens'],
       classifiers=[
           "Programming Language :: Python :: 3",
       ],
