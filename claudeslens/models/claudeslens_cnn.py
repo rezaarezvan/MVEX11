@@ -26,7 +26,7 @@ class ClaudesLensCNN(nn.Module):
             ConvBlock(16, 32),
         )
         self.flatten = nn.Flatten()
-        img_size = (num_inputs/num_channels)**0.5
+        img_size = int((num_inputs/num_channels)**0.5)
         with torch.no_grad():
             self._dummy_input = torch.zeros(
                 1, num_channels, img_size, img_size)
