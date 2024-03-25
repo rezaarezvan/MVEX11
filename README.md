@@ -1,6 +1,6 @@
 <div align="center">
 <h3>
-  bayeslens
+  claudeslens
 </h3>
 
 [![logo](docs/logo.png)](https://github.com/rezaarezvan/MVEX11)
