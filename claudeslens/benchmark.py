@@ -87,19 +87,21 @@ def main():
 
     for model in models:
         model_name = model.__class__.__name__
-        pth = f'models/model_dirs/{model_name}'
+        pth = './weights/'
         print(f"""Running Model: {model_name}""")
         optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
         criterion = nn.CrossEntropyLoss()
         if args.soda:
             train_loader, val_loader, test_loader = load_SODA(dataset_path, batch_size=args.batch_size, ViT=True if isinstance(
                 model, Pretrained_ViT) or isinstance(model, ClaudesLens_ViT) else False)
-            pth += '_SODA.pth'
+            pth += 'SODA/'
         else:
             train_loader, test_loader = load_MNIST(dataset_path, batch_size=args.batch_size, ViT=True if isinstance(
                 model, Pretrained_ViT) or isinstance(model, ClaudesLens_ViT) else False)
             val_loader = test_loader
-            pth += '_MNIST.pth'
+            pth += 'MNIST'
+
+        pth += f'/{model_name}.pth'
 
         if args.train and not args.load_weights:
             train(model, train_loader, val_loader, optimizer,
