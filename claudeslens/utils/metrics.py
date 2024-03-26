@@ -1,9 +1,9 @@
 import torch
 import numpy as np
 from torch.distributions import Categorical
+from . import SEED
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.manual_seed(0)
+torch.manual_seed(SEED)
 
 
 def entropy(predictions: torch.Tensor):

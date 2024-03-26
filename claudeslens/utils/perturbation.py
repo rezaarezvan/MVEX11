@@ -4,9 +4,9 @@ from tqdm.auto import tqdm
 from .metrics import entropy, weight_avg, psi, max_psi_sigma
 from .training import add_noise, restore_parameters, save_parameters, evaluate
 from .plot import plot_entropy_acc_cert, plot_weight_avg, barplot_ent_acc_cert
+from . import DEVICE, SEED
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.manual_seed(0)
+torch.manual_seed(SEED)
 
 
 @torch.no_grad()

@@ -3,8 +3,9 @@ import torch
 import numpy as np
 import torch.nn as nn
 from tqdm.auto import tqdm
+from . import DEVICE, SEED
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+torch.manual_seed(SEED)
 
 
 def save_parameters(model):
