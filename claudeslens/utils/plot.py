@@ -1,4 +1,5 @@
 import os
+import torch
 import imageio
 import numpy as np
 import matplotlib.pyplot as plt
@@ -159,3 +160,39 @@ def plot_weight_avg(data, SAVE_PLOT=False):
     plt.legend()
     os.makedirs('imgs/curves', exist_ok=True)
     plt.savefig(f'imgs/curves/curves.pdf') if SAVE_PLOT else plt.show()
+
+
+def visualize_attention_map(image, attention_map):
+    attention_map = attention_map.mean(dim=1)
+    attention_map_no_class_token = attention_map[:, 1:, 1:]
+    attention_map_single = attention_map_no_class_token[0]
+    attention_map_avg = attention_map_single.mean(dim=0)
+
+    seq_len = attention_map_avg.shape[0]
+    sqrt_len = int(np.sqrt(seq_len))
+    attention_map_2d = attention_map_avg.view(sqrt_len, sqrt_len)
+
+    attention_map_resized = torch.nn.functional.interpolate(
+        attention_map_2d.unsqueeze(0).unsqueeze(0),
+        size=image.shape[-2:],
+        mode='bilinear',
+        align_corners=False
+    ).squeeze(0).squeeze(0)
+
+    attention_map_np = attention_map_resized.detach().cpu().numpy()
+
+    plt.subplot(1, 2, 1)
+    plt.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy())
+    plt.axis('off')
+    plt.title('Original Image')
+    plt.colorbar()
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy(), alpha=0.8)
+    plt.imshow(attention_map_np, cmap='hot',
+               interpolation='nearest', alpha=0.3)
+    plt.axis('off')
+    plt.title('Attention Map')
+    plt.colorbar()
+
+    plt.show()

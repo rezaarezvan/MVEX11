@@ -7,8 +7,8 @@ from data.loaders import load_SODA, load_MNIST
 from models.logistic import LogisticRegression
 from models.claudeslens_cnn import ClaudesLensCNN
 from models.claudeslens_vit import ClaudesLens_ViT
-from models.vit_b_16 import Pretrained_ViT
-from utils.training import train, save_model, load_model
+from models.pretrained_vit import Pretrained_ViT
+from utils.training import train, save_model, load_model, add_noise, eval_attention
 from utils.perturbation import evalute_weight_perturbation, perturbation, evaluate_robustness
 
 writer = SummaryWriter('runs/')
@@ -103,15 +103,17 @@ def main():
 
         pth += f'/{model_name}.pth'
 
-        if args.train and not args.load_weights:
-            train(model, train_loader, val_loader, optimizer,
-                  epochs=args.epochs, lossfn=criterion, writer=writer)
-        if args.load_weights:
-            load_model(model, pth)
-            model.eval()
-        if args.save_weights:
-            save_model(model, pth)
-        perturbation(model, test_loader, SAVE_PLOT=args.save_plots)
+        # if args.train and not args.load_weights:
+        #     train(model, train_loader, val_loader, optimizer,
+        #           epochs=args.epochs, lossfn=criterion, writer=writer)
+        # if args.load_weights:
+        #     load_model(model, pth)
+        #     model.eval()
+        # if args.save_weights:
+        #     save_model(model, pth)
+        # perturbation(model, test_loader, SAVE_PLOT=args.save_plots)
+
+        eval_attention(model, test_loader)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ import numpy as np
 import torch.nn as nn
 from tqdm.auto import tqdm
 from . import DEVICE, SEED
+from .plot import visualize_attention_map
 
 torch.manual_seed(SEED)
 
@@ -118,3 +119,12 @@ def evaluate(model, test_loader, writer=None, global_step=None):
 
     print(f"Validation Accuracy: {avg_accuracy:.4f}")
     return avg_accuracy
+
+
+def eval_attention(model, test_loader, n=3):
+    model.eval().to(DEVICE)
+    images = next(iter(test_loader))[0].to(DEVICE)
+    for image in images[:n]:
+        image = image.unsqueeze(0)
+        _, attention_map = model(image, need_weights=True)
+        visualize_attention_map(image, attention_map)

@@ -14,20 +14,17 @@ DEFAULT_TRANSFORM_SODA_VIT = transforms.Compose([
 DEFAULT_TRANSFORM_SODA = transforms.Compose([
     transforms.Resize((256, 256)),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 ])
 
 DEFAULT_TRANSFORM_MNIST = transforms.Compose([
     transforms.Resize((28, 28)),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5], std=[0.5])
 ])
 
 DEFAULT_TRANSFORM_MNIST_VIT = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.Grayscale(num_output_channels=3),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 ])
 
 
