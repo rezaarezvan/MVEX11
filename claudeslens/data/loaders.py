@@ -9,7 +9,6 @@ from torch.utils.data import Dataset, DataLoader
 DEFAULT_TRANSFORM_SODA_VIT = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 ])
 
 DEFAULT_TRANSFORM_SODA = transforms.Compose([
