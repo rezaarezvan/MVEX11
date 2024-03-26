@@ -103,17 +103,17 @@ def main():
 
         pth += f'/{model_name}.pth'
 
-        # if args.train and not args.load_weights:
-        #     train(model, train_loader, val_loader, optimizer,
-        #           epochs=args.epochs, lossfn=criterion, writer=writer)
-        # if args.load_weights:
-        #     load_model(model, pth)
-        #     model.eval()
-        # if args.save_weights:
-        #     save_model(model, pth)
-        # perturbation(model, test_loader, SAVE_PLOT=args.save_plots)
+        if args.train and not args.load_weights:
+            train(model, train_loader, val_loader, optimizer,
+                  epochs=args.epochs, lossfn=criterion, writer=writer)
+        if args.load_weights:
+            load_model(model, pth)
+            model.eval()
+        if args.save_weights:
+            save_model(model, pth)
+        perturbation(model, test_loader, SAVE_PLOT=args.save_plots)
 
-        eval_attention(model, test_loader)
+        # eval_attention(model, test_loader)
 
 
 if __name__ == "__main__":
