@@ -36,9 +36,12 @@ class CustomEncoder(nn.Module):
         attn_maps = []
         x = x + self.pos_embedding
         x = self.dropout(x)
+
         for layer in self.layers:
             x, attn_map = layer(x)
             attn_maps.append(attn_map)
+
+        attn_maps = torch.stack(attn_maps, dim=1)
         return self.ln(x), attn_maps
 
 
@@ -47,15 +50,12 @@ class Pretrained_ViT(nn.Module):
         super(Pretrained_ViT, self).__init__()
         self.vit = vit_b_16(weights=ViT_B_16_Weights.DEFAULT)
 
-        # Replace the encoder with a custom one
         original_encoder = self.vit.encoder
         self.vit.encoder = CustomEncoder(original_encoder)
 
-        # Freeze the parameters
         for param in self.vit.parameters():
             param.requires_grad = False
 
-        # Replace the classification head
         self.vit.heads.head = nn.Linear(
             self.vit.heads.head.in_features, num_classes)
 
@@ -67,8 +67,8 @@ class Pretrained_ViT(nn.Module):
 
         x = x[:, 0]
         x = self.vit.heads(x)
+
         if need_weights:
-            attn_maps = torch.stack(attn_maps, dim=1)
             return x, attn_maps
         return x
 
@@ -91,6 +91,10 @@ class Pretrained_ViT(nn.Module):
 
         attention_map_np = attention_map_resized.detach().cpu().numpy()
 
+        plt.subplot(1, 2, 1)
+        plt.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy())
+
+        plt.subplot(1, 2, 2)
         plt.imshow(attention_map_np, cmap='jet',
                    alpha=0.5, interpolation='nearest')
         plt.colorbar()
