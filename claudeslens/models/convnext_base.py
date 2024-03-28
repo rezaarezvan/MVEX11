@@ -7,10 +7,19 @@ class ConvNext(nn.Module):
         super(ConvNext, self).__init__()
         self.convnext = convnext_base(weights=ConvNeXt_Base_Weights.DEFAULT)
 
-        # TODO: Fix this, doesn't work for now
+        last_block = list(self.convnext.features.children())[-4]
+        if isinstance(last_block, nn.Sequential):
+            last_conv_layer = [layer for layer in last_block.modules(
+            ) if isinstance(layer, nn.Conv2d)][-1]
+            lastconv_output_channels = last_conv_layer.out_channels
+        else:
+            print(
+                "Check the model structure, the assumption about the last block might be incorrect.")
+            lastconv_output_channels = 512
+
         self.convnext.classifier = nn.Sequential(
             nn.Flatten(1),
-            nn.Linear(self.convnext.lastconv_output_channels, num_classes)
+            nn.Linear(lastconv_output_channels, num_classes)
         )
 
     def forward(self, x):
