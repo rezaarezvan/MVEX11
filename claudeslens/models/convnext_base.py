@@ -11,15 +11,16 @@ class ConvNext(nn.Module):
         if isinstance(last_block, nn.Sequential):
             last_conv_layer = [layer for layer in last_block.modules(
             ) if isinstance(layer, nn.Conv2d)][-1]
-            lastconv_output_channels = last_conv_layer.out_channels
+            self.lastconv_output_channels = last_conv_layer.out_channels
         else:
             print(
                 "Check the model structure, the assumption about the last block might be incorrect.")
             lastconv_output_channels = 512
+            self.lastconv_output_channels = lastconv_output_channels
 
         self.convnext.classifier = nn.Sequential(
             nn.Flatten(1),
-            nn.Linear(lastconv_output_channels, num_classes)
+            nn.Linear(self.lastconv_output_channels, num_classes)
         )
 
     def forward(self, x):
