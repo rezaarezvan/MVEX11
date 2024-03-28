@@ -100,8 +100,8 @@ def main():
                 model, Pretrained_ViT_B_16) or isinstance(model, ClaudesLens_ViT) else False)
             pth += 'SODA/'
         else:
-            train_loader, test_loader = load_MNIST(dataset_path, batch_size=args.batch_size, ViT=True if isinstance(
-                model, Pretrained_ViT_B_16) or isinstance(model, ClaudesLens_ViT) else False)
+            train_loader, test_loader = load_MNIST(dataset_path, batch_size=args.batch_size, ViT=True if isinstance(model, Pretrained_ViT_B_16) or isinstance(
+                model, ClaudesLens_ViT) else False, ConvNext=True if isinstance(model, Pretrained_ConvNext) or isinstance(model, ClaudesLens_ConvNext) else False)
             val_loader = test_loader
             pth += 'MNIST'
 

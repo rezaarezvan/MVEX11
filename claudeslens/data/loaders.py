@@ -6,13 +6,13 @@ from PIL import Image
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 
-DEFAULT_TRANSFORM_SODA_VIT = transforms.Compose([
-    transforms.Resize((224, 224)),
+DEFAULT_TRANSFORM_SODA = transforms.Compose([
+    transforms.Resize((256, 256)),
     transforms.ToTensor(),
 ])
 
-DEFAULT_TRANSFORM_SODA = transforms.Compose([
-    transforms.Resize((256, 256)),
+DEFAULT_TRANSFORM_SODA_VIT = transforms.Compose([
+    transforms.Resize((224, 224)),
     transforms.ToTensor(),
 ])
 
@@ -23,6 +23,12 @@ DEFAULT_TRANSFORM_MNIST = transforms.Compose([
 
 DEFAULT_TRANSFORM_MNIST_VIT = transforms.Compose([
     transforms.Resize((224, 224)),
+    transforms.Grayscale(num_output_channels=3),
+    transforms.ToTensor(),
+])
+
+DEFAULT_TRANSFORM_MNIST_CONVNEXT = transforms.Compose([
+    transforms.Resize((32, 32)),
     transforms.Grayscale(num_output_channels=3),
     transforms.ToTensor(),
 ])
@@ -117,11 +123,13 @@ def load_SODA(dataset_path, batch_size=32, ViT=False):
     return train, val, test
 
 
-def load_MNIST(root_dir='../extra/datasets', batch_size=16, ViT=False):
+def load_MNIST(root_dir='../extra/datasets', batch_size=16, ViT=False, ConvNext=False):
     train = torchvision.datasets.MNIST(
-        root=root_dir, train=True, download=True, transform=DEFAULT_TRANSFORM_MNIST_VIT if ViT else DEFAULT_TRANSFORM_MNIST)
+        root=root_dir, train=True, download=True,
+        transform=DEFAULT_TRANSFORM_MNIST_CONVNEXT if ConvNext else DEFAULT_TRANSFORM_MNIST_VIT if ViT else DEFAULT_TRANSFORM_MNIST)
     test = torchvision.datasets.MNIST(
-        root=root_dir, train=False, download=True, transform=DEFAULT_TRANSFORM_MNIST_VIT if ViT else DEFAULT_TRANSFORM_MNIST)
+        root=root_dir, train=False, download=True,
+        transform=DEFAULT_TRANSFORM_MNIST_CONVNEXT if ConvNext else DEFAULT_TRANSFORM_MNIST_VIT if ViT else DEFAULT_TRANSFORM_MNIST)
 
     train = DataLoader(train, batch_size=batch_size,
                        shuffle=True, num_workers=4, pin_memory=True)
