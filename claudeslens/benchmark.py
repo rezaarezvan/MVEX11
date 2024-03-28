@@ -4,20 +4,22 @@ import torch.optim as optim
 from torch.utils.tensorboard.writer import SummaryWriter
 
 from data.loaders import load_SODA, load_MNIST
-from models.logistic import LogisticRegression
-from models.claudeslens_cnn import ClaudesLensCNN
+from models.pretrained_vit import Pretrained_ViT_B_16
 from models.claudeslens_vit import ClaudesLens_ViT
-from models.pretrained_vit import Pretrained_ViT
+from models.claudeslens_convnext import ClaudesLens_ConvNext
+from models.pretrained_convnext import Pretrained_ConvNext
+from models.claudeslens_logistic import ClaudesLens_Logistic
 from utils.training import train, save_model, load_model, add_noise, eval_attention
 from utils.perturbation import evalute_weight_perturbation, perturbation, evaluate_robustness
 
 writer = SummaryWriter('runs/')
 
 model_choices = {
-    'log': LogisticRegression,
-    'pv': Pretrained_ViT,
+    'pv': Pretrained_ViT_B_16,
     'cv': ClaudesLens_ViT,
-    'cc': ClaudesLensCNN,
+    'pc': Pretrained_ConvNext,
+    'cc': ClaudesLens_ConvNext,
+    'cl': ClaudesLens_Logistic,
 }
 
 
@@ -46,8 +48,10 @@ def parse_arguments():
                         help="Different Models to test/train\n"
                         "pv  = Pretrained_ViT\n"
                         "cv  = ClaudesLens_ViT\n"
-                        "cc  = ClaudesLensCNN\n"
-                        "log = LogisticRegression")
+                        "pc  = PretrainedConvNext\n"
+                        "cc  = ClaudesLens_ConvNext\n"
+                        "cl  = ClaudesLens_Logistic\n"
+                        "Example: -m pv,cv,pc,cc,cl")
     parser.add_argument('-lw', '--load_weights', action='store_true',
                         help='Load weights for initalized models')
     parser.add_argument('-sw', '--save_weights', action='store_true',
@@ -93,11 +97,11 @@ def main():
         criterion = nn.CrossEntropyLoss()
         if args.soda:
             train_loader, val_loader, test_loader = load_SODA(dataset_path, batch_size=args.batch_size, ViT=True if isinstance(
-                model, Pretrained_ViT) or isinstance(model, ClaudesLens_ViT) else False)
+                model, Pretrained_ViT_B_16) or isinstance(model, ClaudesLens_ViT) else False)
             pth += 'SODA/'
         else:
             train_loader, test_loader = load_MNIST(dataset_path, batch_size=args.batch_size, ViT=True if isinstance(
-                model, Pretrained_ViT) or isinstance(model, ClaudesLens_ViT) else False)
+                model, Pretrained_ViT_B_16) or isinstance(model, ClaudesLens_ViT) else False)
             val_loader = test_loader
             pth += 'MNIST'
 
