@@ -17,7 +17,7 @@ python3 -m pip install -e .
 
 To download the SODA10M dataset, run the following command:
 ```
-python3 soda.py
+python3 extra/soda.py
 ```
 
 
