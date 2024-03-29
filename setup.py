@@ -26,6 +26,7 @@ setup(
         'testing': [
             "pytest",
             "tabulate",
+            "mock",
         ]
     },
     include_package_data=True

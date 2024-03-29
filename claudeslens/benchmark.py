@@ -1,16 +1,17 @@
+import os
 import argparse
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from data.loaders import load_SODA, load_MNIST
-from models.pretrained_vit import Pretrained_ViT_B_16
-from models.claudeslens_vit import ClaudesLens_ViT
-from models.claudeslens_convnext import ClaudesLens_ConvNext
-from models.pretrained_convnext import Pretrained_ConvNext
-from models.claudeslens_logistic import ClaudesLens_Logistic
-from utils.training import train, save_model, load_model, add_noise, eval_attention
-from utils.perturbation import evalute_weight_perturbation, perturbation, evaluate_robustness
+from claudeslens.data.loaders import load_SODA, load_MNIST
+from claudeslens.models.pretrained_vit import Pretrained_ViT_B_16
+from claudeslens.models.claudeslens_vit import ClaudesLens_ViT
+from claudeslens.models.claudeslens_convnext import ClaudesLens_ConvNext
+from claudeslens.models.pretrained_convnext import Pretrained_ConvNext
+from claudeslens.models.claudeslens_logistic import ClaudesLens_Logistic
+from claudeslens.utils.training import train, save_model, load_model, add_noise, eval_attention
+from claudeslens.utils.perturbation import evalute_weight_perturbation, perturbation, evaluate_robustness
 
 writer = SummaryWriter('runs/')
 
@@ -65,15 +66,26 @@ def parse_arguments():
     return args
 
 
+def get_project_root():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.join(
+        current_dir, '..') if 'claudeslens' in current_dir else current_dir
+    return os.path.abspath(project_root)
+
+
+def get_dataset_path(dataset_name):
+    return os.path.join(get_project_root(), 'extra', 'datasets', dataset_name)
+
+
 def main():
     args = parse_arguments()
     if args.soda:
-        dataset_path = '../extra/datasets/SODA'
+        dataset_path = get_dataset_path('SODA')
         num_classes = 6
         num_inputs = 3*256*256
         num_channels = 3
     else:
-        dataset_path = '../extra/datasets/MNIST'
+        dataset_path = get_dataset_path('MNIST')
         num_classes = 10
         num_inputs = 28*28
         num_channels = 1
