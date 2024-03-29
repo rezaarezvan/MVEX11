@@ -15,6 +15,11 @@ Bachelor's thesis in Mathematics - MVEX11
 python3 -m pip install -e .
 ```
 
+To download the SODA10M dataset, run the following command:
+```
+python3 soda.py
+```
+
 
 ### Testing
 ```
