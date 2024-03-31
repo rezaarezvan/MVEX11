@@ -6,7 +6,6 @@ from claudeslens.benchmark import main as claudeslens_main
 class TestClaudesLens(unittest.TestCase):
     @patch('claudeslens.benchmark.argparse.ArgumentParser.parse_args')
     @patch('claudeslens.benchmark.train')
-    @patch('claudeslens.benchmark.perturbation')
     @patch('claudeslens.benchmark.load_MNIST', return_value=(None, None))
     def test_claudeslens_runs_mnist(self, mock_load_MNIST, mock_train, mock_parse_args):
         """
@@ -31,7 +30,6 @@ class TestClaudesLens(unittest.TestCase):
 
     @patch('claudeslens.benchmark.argparse.ArgumentParser.parse_args')
     @patch('claudeslens.benchmark.train')
-    @patch('claudeslens.benchmark.perturbation')
     @patch('claudeslens.benchmark.load_SODA', return_value=(None, None, None))
     def test_claudeslens_runs_soda(self, mock_load_SODA, mock_train, mock_parse_args):
         """
