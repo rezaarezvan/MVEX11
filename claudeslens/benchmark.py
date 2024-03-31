@@ -10,8 +10,8 @@ from claudeslens.models.claudeslens_vit import ClaudesLens_ViT
 from claudeslens.models.claudeslens_convnext import ClaudesLens_ConvNext
 from claudeslens.models.pretrained_convnext import Pretrained_ConvNext
 from claudeslens.models.claudeslens_logistic import ClaudesLens_Logistic
-from claudeslens.utils.training import train, save_model, load_model, add_noise, eval_attention
-from claudeslens.utils.perturbation import evalute_weight_perturbation, perturbation, evaluate_robustness
+from claudeslens.utils.training import train, save_model, load_model, eval_attention
+from claudeslens.utils.perturbation import perturbation
 
 writer = SummaryWriter('runs/')
 
@@ -44,7 +44,7 @@ def parse_arguments():
     parser.add_argument('-bs', '--batch_size', default=32,
                         type=int, help='Batch size for training and evaluation')
     parser.add_argument('-e', '--epochs', default=1, type=int,
-                        help='Number of epochs to train the model')
+                        help='Number of epochs to train the models')
     parser.add_argument('-m', '--models', type=list_of_models, default=['log'],
                         help="Different Models to test/train\n"
                         "pv  = Pretrained_ViT\n"
@@ -58,9 +58,11 @@ def parse_arguments():
     parser.add_argument('-sw', '--save_weights', action='store_true',
                         help='Saves the models after training in their respective .pth')
     parser.add_argument('-t', '--train', action='store_true',
-                        help='Option to train or just evaluate')
+                        help='Option to train the models')
     parser.add_argument('-sp', '--save_plots', action='store_true',
                         help='Save the plots')
+    parser.add_argument('-b', '--benchmark', action='store_true',
+                        help='Option to benchmark the models')
 
     args = parser.parse_args()
     return args
@@ -124,12 +126,13 @@ def main():
                   epochs=args.epochs, lossfn=criterion, writer=writer)
         if args.load_weights:
             load_model(model, pth)
-            model.eval()
         if args.save_weights:
             save_model(model, pth)
-        perturbation(model, test_loader, SAVE_PLOT=args.save_plots)
 
-        # eval_attention(model, test_loader)
+        if args.benchmark:
+            perturbation(model, test_loader, SAVE_PLOT=args.save_plots)
+            if isinstance(model, ClaudesLens_ViT) or isinstance(model, Pretrained_ViT_B_16):
+                eval_attention(model, test_loader)
 
 
 if __name__ == "__main__":

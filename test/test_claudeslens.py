@@ -8,7 +8,7 @@ class TestClaudesLens(unittest.TestCase):
     @patch('claudeslens.benchmark.train')
     @patch('claudeslens.benchmark.perturbation')
     @patch('claudeslens.benchmark.load_MNIST', return_value=(None, None))
-    def test_claudeslens_runs_mnist(self, mock_load_MNIST, mock_perturbation, mock_train, mock_parse_args):
+    def test_claudeslens_runs_mnist(self, mock_load_MNIST, mock_train, mock_parse_args):
         """
         Test that the main function can run with mocked components for MNIST.
         """
@@ -20,6 +20,7 @@ class TestClaudesLens(unittest.TestCase):
             'load_weights': False,
             'save_weights': False,
             'train': True,
+            'benchmark': False,
             'save_plots': False,
         }
         mock_parse_args.return_value = type('Args', (object,), mock_args)()
@@ -27,13 +28,12 @@ class TestClaudesLens(unittest.TestCase):
 
         mock_load_MNIST.assert_called()
         mock_train.assert_called()
-        mock_perturbation.assert_called()
 
     @patch('claudeslens.benchmark.argparse.ArgumentParser.parse_args')
     @patch('claudeslens.benchmark.train')
     @patch('claudeslens.benchmark.perturbation')
     @patch('claudeslens.benchmark.load_SODA', return_value=(None, None, None))
-    def test_claudeslens_runs_soda(self, mock_load_SODA, mock_perturbation, mock_train, mock_parse_args):
+    def test_claudeslens_runs_soda(self, mock_load_SODA, mock_train, mock_parse_args):
         """
         Test that the main function can run with mocked components for SODA.
         """
@@ -45,6 +45,7 @@ class TestClaudesLens(unittest.TestCase):
             'load_weights': False,
             'save_weights': False,
             'train': True,
+            'benchmark': False,
             'save_plots': False,
         }
         mock_parse_args.return_value = type('Args', (object,), mock_args)()
@@ -52,7 +53,6 @@ class TestClaudesLens(unittest.TestCase):
 
         mock_load_SODA.assert_called()
         mock_train.assert_called()
-        mock_perturbation.assert_called()
 
 
 if __name__ == '__main__':
