@@ -1,9 +1,12 @@
+import os
 import torch
 import numpy as np
 import torch.nn as nn
 from tqdm.auto import tqdm
+from . import DEVICE, SEED
+from .plot import visualize_attention_map
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+torch.manual_seed(SEED)
 
 
 def save_parameters(model):
@@ -25,8 +28,9 @@ def restore_parameters(model, original_params):
 
 def save_model(model, path):
     """
-    Save model to path
+    Save model to path, if the path does not exist, it will be created
     """
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     torch.save(model.state_dict(), path)
     print(f'Model saved to {path}')
 
@@ -115,3 +119,12 @@ def evaluate(model, test_loader, writer=None, global_step=None):
 
     print(f"Validation Accuracy: {avg_accuracy:.4f}")
     return avg_accuracy
+
+
+def eval_attention(model, test_loader, n=3):
+    model.eval().to(DEVICE)
+    images = next(iter(test_loader))[0].to(DEVICE)
+    for image in images[:n]:
+        image = image.unsqueeze(0)
+        _, attention_map = model(image, need_weights=True)
+        visualize_attention_map(image, attention_map)

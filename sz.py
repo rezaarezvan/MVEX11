@@ -11,7 +11,7 @@ TOKEN_WHITELIST = [token.OP, token.NAME, token.NUMBER, token.STRING]
 
 def gen_stats(base_path="."):
     table = []
-    for path, _, files in os.walk(os.path.join(base_path, "bayeslens")):
+    for path, _, files in os.walk(os.path.join(base_path, "claudeslens")):
         for name in files:
             if not name.endswith(".py"):
                 continue

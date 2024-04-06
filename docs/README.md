@@ -1,3 +1,3 @@
-# Welcome to the bayeslens documentation!
+# Welcome to the claudeslens documentation!
 
-Here you will find documentation for bayeslens
+Here you will find documentation for claudeslens

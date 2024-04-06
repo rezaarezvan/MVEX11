@@ -1,16 +1,18 @@
 import torch
 import torch.nn as nn
 from tqdm.auto import tqdm
-from .metrics import entropy, weight_avg, psi, best_sigma
-from .training import add_noise, restore_parameters, save_parameters, evaluate
-from .plot import plot_entropy_acc_cert, plot_weight_avg, plot_most_often_similar
+from claudeslens.utils.metrics import entropy, weight_avg, psi, max_psi_sigma
+from claudeslens.utils.training import add_noise, restore_parameters, save_parameters, evaluate
+from claudeslens.utils.plot import plot_entropy_acc_cert, plot_weight_avg, plot_most_often_similar
+from . import DEVICE, SEED
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.manual_seed(0)
+torch.manual_seed(SEED)
 
 """
 Everything calculated in this file is done batch-wise.
 """
+
+
 @torch.no_grad()
 def evaluate_robustness(model, test_loader, sigmas=[0.1, 0.25, 0.5], iters=10):
     """
@@ -38,7 +40,7 @@ def evaluate_robustness(model, test_loader, sigmas=[0.1, 0.25, 0.5], iters=10):
 
 
 @torch.no_grad()
-def evaluateMixUp(model, test_loader, sigma=0.05, iterations=100):
+def evaluate_mix_up(model, test_loader, sigma=0.05, iterations=100):
     """
     Computes to what degree the model mixes up the label (Calculates the entropy
     without the given correct label)
@@ -78,12 +80,10 @@ def evaluateMixUp(model, test_loader, sigma=0.05, iterations=100):
     # This will sort the list as following:
     # [((length of predictions), correct label), ...]
     #
-    matrix_with_correct_label = [(all_predictions[i], labels[i].item()) for i in range(len(labels))]
-
-
+    matrix_with_correct_label = [
+        (all_predictions[i], labels[i].item()) for i in range(len(labels))]
 
     plot_most_often_similar(matrix_with_correct_label, 0.9)
-
 
 
 @torch.no_grad()
@@ -95,8 +95,8 @@ def evalute_perturbation(model, test_loader, sigma=0, iters=10):
     model.eval()
     model.to(DEVICE)
     result = []
-    total_pred = []
-    all_labels = []
+    total_pred = []  # ?
+    all_labels = []  # ?
 
     loop = tqdm(test_loader, leave=False)
     for images, labels in loop:
@@ -148,7 +148,7 @@ def perturbation(model, test_loader, iters=20, sigmas=[0.01], lambdas=[0.1, 0.5,
         psi_list.append(psi(entropy))
         print('-----------------------------------\n')
 
-    print(best_sigma(psi_list, sigmas))
+    print(max_psi_sigma(psi_list, sigmas))
     plot_weight_avg(weighted_average, SAVE_PLOT=SAVE_PLOT)
     for entropy, sigma in zip(entropies, sigmas):
         plot_entropy_acc_cert(entropy, sigma, iters, SAVE_PLOT=SAVE_PLOT)
