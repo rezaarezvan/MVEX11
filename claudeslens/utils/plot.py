@@ -9,7 +9,7 @@ from tqdm.auto import tqdm
 from statistics import pstdev as std_dev
 
 
-def plot_pair_entaglement(predictions_and_correct_label, threshold: float):
+def plot_pair_entanglement(predictions_and_correct_label, threshold: float):
     """
     Visualises the pairs of most often interchanged predictions.
     Args:
@@ -73,7 +73,6 @@ def plot_pair_entaglement(predictions_and_correct_label, threshold: float):
         # print(x, y, stats['count'], stats['correct'])
         correctness = stats['correct'] / stats['count']
         colors.append(correctness)
-
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
