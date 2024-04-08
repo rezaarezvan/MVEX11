@@ -95,7 +95,7 @@ def plot_pair_entaglement(predictions_and_correct_label, threshold: float):
     plt.show()
 
 
-def plot_entropy_acc_cert(ent_acc_cert, sigma, iterations, SAVE_PLOT=False):
+def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=False):
     """
     Plots the entropy, accuracy and certainty in a 3D plot.
     """
@@ -246,10 +246,12 @@ def plot_weight_avg(data, SAVE_PLOT=False):
     for lst, sigma in data:
         sorted_data = sorted(lst, key=lambda x: x[0])
         entropy, probability = zip(*sorted_data)
-        
+
+        entropy, probability = list(entropy), list(probability)
+
         deviation = std_dev(probability)
         plt.plot(entropy, probability, marker='o', label=f'Sigma:{sigma:.2f}')
-        plt.fill_between(entropy, probability-deviation, probability+deviation)
+        plt.fill_between(entropy, [x-deviation for x in probability], [x+deviation for x in probability], alpha=0.2)
 
     plt.legend()
     os.makedirs('imgs/curves', exist_ok=True)
