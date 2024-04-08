@@ -3,7 +3,7 @@ import torch.nn as nn
 from tqdm.auto import tqdm
 from claudeslens.utils.metrics import entropy, weight_avg, psi, max_psi_sigma
 from claudeslens.utils.training import add_noise, restore_parameters, save_parameters, evaluate
-from claudeslens.utils.plot import plot_entropy_acc_cert, plot_weight_avg, plot_most_often_similar
+from claudeslens.utils.plot import plot_entropy_acc_cert, plot_weight_avg, plot_pair_entaglement
 from . import DEVICE, SEED
 
 torch.manual_seed(SEED)
@@ -19,8 +19,7 @@ def evaluate_robustness(model, test_loader, sigmas=[0.1, 0.25, 0.5], iters=10):
     Evaluate the robustness of the model by adding noise to the model parameters
     and evaluating the models accuracy on the entire test set
     """
-    model.eval()
-    model.to(DEVICE)
+    model.eval().to(DEVICE)
     result = []
     loop = tqdm(sigmas, leave=False, disable=False)
     for sigma in loop:
@@ -40,7 +39,7 @@ def evaluate_robustness(model, test_loader, sigmas=[0.1, 0.25, 0.5], iters=10):
 
 
 @torch.no_grad()
-def evaluate_mix_up(model, test_loader, sigma=0.05, iterations=100):
+def evaluate_pair_entaglement(model, test_loader, sigma=0.05, iterations=100):
     """
     Computes to what degree the model mixes up the label (Calculates the entropy
     without the given correct label)
@@ -53,8 +52,7 @@ def evaluate_mix_up(model, test_loader, sigma=0.05, iterations=100):
         [([1,2,0,1,1,2,1,1,1], 1), ...]
     """
 
-    model.eval()
-    model.to(DEVICE)
+    model.eval().to(DEVICE)
     loop = tqdm(test_loader, leave=False)
     for images, labels in loop:
         predictions = []
@@ -83,7 +81,7 @@ def evaluate_mix_up(model, test_loader, sigma=0.05, iterations=100):
     matrix_with_correct_label = [
         (all_predictions[i], labels[i].item()) for i in range(len(labels))]
 
-    plot_most_often_similar(matrix_with_correct_label, 0.9)
+    return matrix_with_correct_label
 
 
 @torch.no_grad()
@@ -92,11 +90,8 @@ def evalute_perturbation(model, test_loader, sigma=0, iters=10):
     Evaluate the perturbation of the model by adding noise to the model parameters
     and calculating the entropy, accuracy and certainty of the model for each batch
     """
-    model.eval()
-    model.to(DEVICE)
+    model.eval().to(DEVICE)
     result = []
-    total_pred = []  # ?
-    all_labels = []  # ?
 
     loop = tqdm(test_loader, leave=False)
     for images, labels in loop:
@@ -128,7 +123,7 @@ def evalute_perturbation(model, test_loader, sigma=0, iters=10):
     return result
 
 
-def perturbation(model, test_loader, iters=20, sigmas=[0.01], lambdas=[0.1, 0.5, 1], entropy_window_size=0.1, SAVE_PLOT=True):
+def perturbation(model, test_loader, iters=20, sigmas=[5], lambdas=[0.1, 0.5, 1], entropy_window_size=0.1, SAVE_PLOT=True):
     """
     Main evaluation loop for the perturbation tests for the model
     """
@@ -140,6 +135,9 @@ def perturbation(model, test_loader, iters=20, sigmas=[0.01], lambdas=[0.1, 0.5,
         print(f"σ: {sigma}")
         entropy = evalute_perturbation(
             model, test_loader, sigma=sigma, iters=iters)
+        matrix_with_correct_label = evaluate_pair_entaglement(
+            model, test_loader, sigma=sigma, iterations=iters)
+        plot_pair_entaglement(matrix_with_correct_label, 0.9)
         weighted_average.append(
             (weight_avg(entropy, window_size=entropy_window_size), sigma))
         entropies.append(entropy)

@@ -8,7 +8,7 @@ from collections import defaultdict
 from tqdm.auto import tqdm
 
 
-def plot_most_often_similar(predictions_and_correct_label, threshold: float):
+def plot_pair_entaglement(predictions_and_correct_label, threshold: float):
     """
     Visualises the pairs of most often interchanged predictions.
     Args:
@@ -55,7 +55,7 @@ def plot_most_often_similar(predictions_and_correct_label, threshold: float):
 
         pairs_of_interest_with_label.append(
             (index_of_largest.item(), index_second_largest, label))
-    print(pairs_of_interest_with_label)
+    # print(pairs_of_interest_with_label)
 
     frequency_map = defaultdict(lambda: {'count': 0, 'correct': 0})
     for largest, second_largest, label in pairs_of_interest_with_label:
@@ -166,7 +166,7 @@ def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=5
     ax.set_ylabel('Entropy')
     ax.set_zlabel('Certainty')
     plt.title(f"""(Accuracy, Entropy, Certainty) (σ: {
-    sigma}, Iterations: {iterations})""")
+        sigma}, Iterations: {iterations})""")
     ax.set_xlim(-0.1, 1.1)
     ax.set_ylim(-0.1, np.log(10) + 0.1)
     ax.set_zlim(-0.1, 1.1)
