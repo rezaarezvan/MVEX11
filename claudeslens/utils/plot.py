@@ -137,8 +137,9 @@ def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False):
     avg_acc, avg_cert = np.array(avg_acc) * 100, np.array(avg_cert) * 100
     num_classes = sorted(averages)
 
+    plt.rcParams.update({'font.size':20})
     plt.figure(figsize=(15, 9))
-    plt.bar(num_classes, avg_acc, color='maroon', width=0.7)
+    plt.bar(num_classes, avg_acc, color='orange', width=0.7)
     plt.bar(num_classes, avg_cert, color='blue', width=0.1)
     plt.bar(num_classes, avg_ent, color='green', width=0.3)
     plt.xlabel('Classes')
@@ -234,6 +235,7 @@ def plot_weight_avg(data, SAVE_PLOT=False):
 
     :param data: A list of tuples, where each tuple is (entropy, probability)
     """
+    plt.rcParams.update({'font.size':20})
     plt.figure(figsize=(15, 9))
     plt.xlabel('Entropy')
     plt.ylabel('Weighted Average Probability')
