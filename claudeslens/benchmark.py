@@ -128,6 +128,7 @@ def main():
             load_model(model, pth)
         if args.save_weights:
             save_model(model, pth)
+        evaluateMixUp(model, test_loader)
 
         if args.benchmark:
             perturbation(model, test_loader, SAVE_PLOT=args.save_plots)
