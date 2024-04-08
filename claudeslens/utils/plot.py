@@ -117,6 +117,7 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
 
     plot_bounds(classes=10)
     os.makedirs('imgs/entropies', exist_ok=True)
+    ax.view_init(elev=25, azim=210)
     plt.savefig(
         f'imgs/entropies/entropy_prob_sigma_{sigma:.2f}.pdf') if SAVE_PLOT else plt.show()
 

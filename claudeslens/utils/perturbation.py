@@ -164,30 +164,6 @@ def perturbation(model, test_loader, iters=20, sigmas=[5], lambdas=[0.1, 0.5, 1]
     """
     Main evaluation loop for the perturbation tests for the model
     """
-    # entropies = []
-    # weighted_average = []
-    # psi_list = []
-    #
-    # for sigma in sigmas:
-    #     print(f"σ: {sigma}")
-    #     entropy = evalute_perturbation(
-    #         model, test_loader, sigma=sigma, iters=iters)
-    #     matrix_with_correct_label = evaluate_pair_entaglement(
-    #         model, test_loader, sigma=sigma, iterations=iters)
-    #     plot_pair_entaglement(matrix_with_correct_label, 0.9)
-    #     weighted_average.append(
-    #         (weight_avg(entropy, window_size=entropy_window_size), sigma))
-    #     entropies.append(entropy)
-    #     for _lambda in lambdas:
-    #         print(f"λ: {_lambda}, ψ: {psi(entropy, _lambda=_lambda)}")
-    #     psi_list.append(psi(entropy))
-    #     print('-----------------------------------\n')
-    #
-    # print(max_psi_sigma(psi_list, sigmas))
-    # plot_weight_avg(weighted_average, SAVE_PLOT=SAVE_PLOT)
-    # for entropy, sigma in zip(entropies, sigmas):
-    #     plot_entropy_acc_cert(entropy, sigma, iters, SAVE_PLOT=SAVE_PLOT)
-
     EAC_weights = []
     EAC_images = []
     weighted_average = []
