@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from collections import defaultdict
 from tqdm.auto import tqdm
+from statistics import pstdev as std_dev
 
 
 def plot_pair_entaglement(predictions_and_correct_label, threshold: float):
@@ -137,7 +138,7 @@ def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False):
     avg_acc, avg_cert = np.array(avg_acc) * 100, np.array(avg_cert) * 100
     num_classes = sorted(averages)
 
-    plt.rcParams.update({'font.size':20})
+    plt.rcParams.update({'font.size':15})
     plt.figure(figsize=(15, 9))
     plt.bar(num_classes, avg_acc, color='orange', width=0.7)
     plt.bar(num_classes, avg_cert, color='blue', width=0.1)
@@ -235,7 +236,7 @@ def plot_weight_avg(data, SAVE_PLOT=False):
 
     :param data: A list of tuples, where each tuple is (entropy, probability)
     """
-    plt.rcParams.update({'font.size':20})
+    plt.rcParams.update({'font.size':15})
     plt.figure(figsize=(15, 9))
     plt.xlabel('Entropy')
     plt.ylabel('Weighted Average Probability')
@@ -245,7 +246,10 @@ def plot_weight_avg(data, SAVE_PLOT=False):
     for lst, sigma in data:
         sorted_data = sorted(lst, key=lambda x: x[0])
         entropy, probability = zip(*sorted_data)
+        
+        deviation = std_dev(probability)
         plt.plot(entropy, probability, marker='o', label=f'Sigma:{sigma:.2f}')
+        plt.fill_between(entropy, probability-deviation, probability+deviation)
 
     plt.legend()
     os.makedirs('imgs/curves', exist_ok=True)
