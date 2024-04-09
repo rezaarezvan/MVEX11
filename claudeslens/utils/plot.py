@@ -100,19 +100,21 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     """
     entropy, accuracy, certainty = zip(*ent_acc_cert)
 
-    plt.figure(figsize=(15, 9))
-    ax = plt.axes(projection='3d')
-    im = ax.scatter3D(accuracy, entropy, certainty, c=labels, cmap='tab10')
+    colors = 'tab10'
+
+    fig = plt.figure(figsize=(15, 9))
+    ax = fig.add_subplot(111, projection='3d')
+    im = ax.scatter3D(accuracy, entropy, certainty, c=labels, cmap=colors)
     ax.set_xlabel('Accuracy')
     ax.set_ylabel('Entropy')
     ax.set_zlabel('Certainty')
     plt.title(
         f'(Accuracy, Entropy, Certainty) (σ: {sigma}, Iterations: {iterations})')
-    plt.grid()
-    ax.set_xlim(-0.1, 1.1)
-    ax.set_ylim(-0.1, np.log(10) + 0.1)
-    ax.set_zlim(-0.1, 1.1)
-    plt.colorbar(im, ax=ax)
+
+    cbar = fig.colorbar(im, ax=ax, ticks=range(10))
+    cbar.set_label('Class index')
+    cbar.set_ticklabels(range(10))
+
 
     plot_bounds(classes=10)
     os.makedirs('imgs/entropies', exist_ok=True)
