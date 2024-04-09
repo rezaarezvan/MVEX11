@@ -3,6 +3,7 @@ import torch
 import imageio
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 from mpl_toolkits.mplot3d import Axes3D
 from collections import defaultdict
 from tqdm.auto import tqdm
@@ -100,23 +101,26 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     """
     entropy, accuracy, certainty = zip(*ent_acc_cert)
 
-    colors = 'tab10'
+    unique_labels = len(torch.cat([torch.tensor(labels)]).unique())
+    color_map = plt.get_cmap('tab20')
+    colors = [color_map(i) for i in range(unique_labels)]
+    custom_cmap = LinearSegmentedColormap.from_list("custom_cmap", colors, unique_labels)
 
     fig = plt.figure(figsize=(15, 9))
     ax = fig.add_subplot(111, projection='3d')
-    im = ax.scatter3D(accuracy, entropy, certainty, c=labels, cmap=colors)
+    im = ax.scatter3D(accuracy, entropy, certainty, c=labels, cmap=custom_cmap)
     ax.set_xlabel('Accuracy')
     ax.set_ylabel('Entropy')
     ax.set_zlabel('Certainty')
     plt.title(
         f'(Accuracy, Entropy, Certainty) (σ: {sigma}, Iterations: {iterations})')
 
-    cbar = fig.colorbar(im, ax=ax, ticks=range(10))
+    cbar = fig.colorbar(im, ax=ax)
     cbar.set_label('Class index')
-    cbar.set_ticklabels(range(10))
+    cbar.set_ticklabels(range(unique_labels))
 
 
-    plot_bounds(classes=10)
+    plot_bounds(classes=unique_labels)
     os.makedirs('imgs/entropies', exist_ok=True)
     ax.view_init(elev=25, azim=210)
     plt.savefig(
