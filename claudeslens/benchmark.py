@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 import torch.nn as nn
 import torch.optim as optim
@@ -12,6 +13,8 @@ from claudeslens.models.pretrained_convnext import Pretrained_ConvNext
 from claudeslens.models.claudeslens_logistic import ClaudesLens_Logistic
 from claudeslens.utils.training import train, save_model, load_model, eval_attention
 from claudeslens.utils.perturbation import perturbation
+
+old_stdout = sys.stdout
 
 writer = SummaryWriter('runs/')
 
@@ -81,6 +84,7 @@ def get_dataset_path(dataset_name):
 
 def main():
     args = parse_arguments()
+    dataset_name = 'SODA' if args.soda else 'MNIST'
     if args.soda:
         dataset_path = get_dataset_path('SODA')
         num_classes = 6
@@ -105,6 +109,9 @@ def main():
 
     for model in models:
         model_name = model.__class__.__name__
+        os.makedirs(f'logs/{dataset_name}', exist_ok=True)
+        log_file = open(f'logs/{dataset_name}/{model_name}.log', 'w')
+        sys.stdout = log_file
         pth = './weights/'
         print(f"""Running Model: {model_name}""")
         optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
@@ -129,9 +136,15 @@ def main():
         if args.save_weights:
             save_model(model, pth)
         if args.benchmark:
-            perturbation(model, test_loader, SAVE_PLOT=args.save_plots)
+            temp_sigmas = [x * 0.1 for x in range(1, 11)]
+            sigmas = [0.01, 0.015, 0.02, 0.025] + temp_sigmas + [1, 5, 50, 100]
+            lambdas = [0.5, 1, 2]
+            perturbation(model, test_loader, sigmas=sigmas,
+                         lambdas=lambdas, SAVE_PLOT=args.save_plots)
             if isinstance(model, ClaudesLens_ViT) or isinstance(model, Pretrained_ViT_B_16):
                 eval_attention(model, test_loader)
+
+        log_file.close()
 
 
 if __name__ == "__main__":
