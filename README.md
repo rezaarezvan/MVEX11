@@ -20,6 +20,11 @@ To download the SODA10M dataset, run the following command:
 python3 extra/soda.py
 ```
 
+To download the pretrained weights, run the following command:
+```
+python3 extra/weights.py
+```
+
 
 ### Testing
 ```
