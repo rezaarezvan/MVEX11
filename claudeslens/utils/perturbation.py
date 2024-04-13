@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from collections import defaultdict
 from tqdm.auto import tqdm
-from claudeslens.utils.metrics import entropy, weight_avg, psi, max_psi_sigma
+from claudeslens.utils.metrics import entropy, weight_avg, psi, max_psi_sigma, pi
 from claudeslens.utils.training import add_noise, restore_parameters, save_parameters, evaluate
 from claudeslens.utils.plot import plot_entropy_acc_cert, plot_weight_avg, barplot_ent_acc_cert
 from . import DEVICE, SEED
@@ -15,33 +15,28 @@ Everything calculated in this file is done batch-wise.
 
 
 @torch.no_grad()
-def evaluate_robustness(model, test_loader, sigmas=[0.1, 0.25, 0.5], iters=10):
+def evaluate_robustness(model, test_loader, og_acc, sigma=0, iters=10):
     """
     Evaluate the robustness of the model by adding noise to the model parameters
     and evaluating the models accuracy on the entire test set
     """
     model.eval().to(DEVICE)
-    result = []
-    loop = tqdm(sigmas, leave=False, disable=False)
-    for sigma in loop:
-        tmp = []
-        for _ in range(iters):
-            original_params = save_parameters(model)
-            add_noise(model, sigma)
+    pi_list = []
+    for _ in range(iters):
+        original_params = save_parameters(model)
+        add_noise(model, sigma)
 
-            acc = evaluate(model, test_loader)
-            tmp.append(acc)
+        acc = evaluate(model, test_loader)
+        pi_list.append(pi(og_acc, acc))
 
-            restore_parameters(model, original_params)
+        restore_parameters(model, original_params)
 
-        acc_mean = sum(tmp) / len(tmp)
-        result.append((sigma, acc_mean))
-    return result
+    pi_mean = sum(pi_list) / len(pi_list)
+    return pi_mean
 
 
 @torch.no_grad()
-def evaluate_pair_entanglement(model, test_loader, sigma, threshold, iterations):
-
+def evaluate_pair_entanglement(model, test_loader, sigma, threshold, iters):
     """
     Returns:
         A list of tuples with the structure: (index of largest, index of second largest, frequency, sigma)
@@ -53,7 +48,7 @@ def evaluate_pair_entanglement(model, test_loader, sigma, threshold, iterations)
         predictions = []
         probs = []
         images, labels = images.to(DEVICE), labels.to(DEVICE)
-        for _ in range(iterations):
+        for _ in range(iters):
             original_params = save_parameters(model)
             add_noise(model, sigma)
 
@@ -91,7 +86,8 @@ def evaluate_pair_entanglement(model, test_loader, sigma, threshold, iterations)
         if len(sorted_indices) > 1:
             index_of_largest = sorted_indices[0].item()
             index_second_largest = sorted_indices[1].item()
-            pairs_of_interest_with_label.append((index_of_largest, index_second_largest, label))
+            pairs_of_interest_with_label.append(
+                (index_of_largest, index_second_largest, label))
 
     frequency_map = defaultdict(int)
     for largest, second_largest, _ in pairs_of_interest_with_label:
@@ -192,9 +188,12 @@ def perturbation(model, test_loader, iters=20, sigmas=[0, 0.01, 0.1, 1], lambdas
     weighted_average = []
     psi_list = []
     pair_entaglement = []
+    og_acc = evaluate(model, test_loader)
 
     for sigma in sigmas:
-        print(f"σ: {sigma}")
+        pi = evaluate_robustness(model, test_loader, og_acc,
+                                 sigma=sigma, iters=iters)
+        print(f"σ: {sigma}, π: {pi}")
         ent_acc_cert_weights = evaluate_weight_perturbation(
             model, test_loader, sigma=sigma, iters=iters)
         ent_acc_cert_images = evaluate_image_perturbation(
@@ -205,7 +204,7 @@ def perturbation(model, test_loader, iters=20, sigmas=[0, 0.01, 0.1, 1], lambdas
         EAC_images.append(ent_acc_cert_images)
 
         matrix_with_correct_label = evaluate_pair_entanglement(
-            model, test_loader, sigma=sigma, iterations=iters, threshold=0)
+            model, test_loader, sigma=sigma, iters=iters, threshold=0)
 
         pair_entaglement.append(matrix_with_correct_label)
 
