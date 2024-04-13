@@ -66,6 +66,8 @@ def parse_arguments():
                         help='Save the plots')
     parser.add_argument('-b', '--benchmark', action='store_true',
                         help='Option to benchmark the models')
+    parser.add_argument('-l', '--log', action='store_true',
+                        help='Option to log the output to a file')
 
     args = parser.parse_args()
     return args
@@ -111,7 +113,7 @@ def main():
         model_name = model.__class__.__name__
         os.makedirs(f'logs/{dataset_name}', exist_ok=True)
         log_file = open(f'logs/{dataset_name}/{model_name}.log', 'w')
-        sys.stdout = log_file
+        sys.stdout = log_file if args.log else old_stdout
         pth = './weights/'
         print(f"""Running Model: {model_name}""")
         optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
