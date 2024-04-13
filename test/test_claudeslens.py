@@ -20,6 +20,7 @@ class TestClaudesLens(unittest.TestCase):
             'save_weights': False,
             'train': True,
             'benchmark': False,
+            'log': False,
             'save_plots': False,
         }
         mock_parse_args.return_value = type('Args', (object,), mock_args)()
@@ -44,6 +45,7 @@ class TestClaudesLens(unittest.TestCase):
             'save_weights': False,
             'train': True,
             'benchmark': False,
+            'log': False,
             'save_plots': False,
         }
         mock_parse_args.return_value = type('Args', (object,), mock_args)()
