@@ -9,6 +9,8 @@ from collections import defaultdict
 from tqdm.auto import tqdm
 from statistics import pstdev as std_dev
 
+plt.rcParams['text.usetex'] = True
+
 
 def plot_pair_entanglement(predictions_and_correct_label, threshold: float):
     """
@@ -104,7 +106,8 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     unique_labels = len(torch.cat([torch.tensor(labels)]).unique())
     color_map = plt.get_cmap('tab20')
     colors = [color_map(i) for i in range(unique_labels)]
-    custom_cmap = LinearSegmentedColormap.from_list("custom_cmap", colors, unique_labels)
+    custom_cmap = LinearSegmentedColormap.from_list(
+        "custom_cmap", colors, unique_labels)
 
     fig = plt.figure(figsize=(15, 9))
     ax = fig.add_subplot(111, projection='3d')
@@ -113,12 +116,11 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     ax.set_ylabel('Entropy')
     ax.set_zlabel('Certainty')
     plt.title(
-        f'(Accuracy, Entropy, Certainty) (σ: {sigma}, Iterations: {iterations})')
+        f'(Accuracy, Entropy, Certainty) ($\\sigma$: {sigma}, Iterations: {iterations})')
 
     cbar = fig.colorbar(im, ax=ax)
     cbar.set_label('Class index')
     cbar.set_ticklabels(range(unique_labels))
-
 
     plot_bounds(classes=unique_labels)
     os.makedirs('imgs/entropies', exist_ok=True)
@@ -144,7 +146,7 @@ def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False):
     avg_acc, avg_cert = np.array(avg_acc) * 100, np.array(avg_cert) * 100
     num_classes = sorted(averages)
 
-    plt.rcParams.update({'font.size':15})
+    plt.rcParams.update({'font.size': 15})
     plt.figure(figsize=(15, 9))
     plt.bar(num_classes, avg_acc, color='orange', width=0.7)
     plt.bar(num_classes, avg_cert, color='blue', width=0.1)
@@ -172,8 +174,8 @@ def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=5
     ax.set_xlabel('Accuracy')
     ax.set_ylabel('Entropy')
     ax.set_zlabel('Certainty')
-    plt.title(f"""(Accuracy, Entropy, Certainty) (σ: {
-        sigma}, Iterations: {iterations})""")
+    plt.title(f"""(Accuracy, Entropy, Certainty) ($\\sigma$: {
+              sigma}, Iterations: {iterations})""")
     ax.set_xlim(-0.1, 1.1)
     ax.set_ylim(-0.1, np.log(10) + 0.1)
     ax.set_zlim(-0.1, 1.1)
@@ -242,7 +244,7 @@ def plot_weight_avg(data, SAVE_PLOT=False):
 
     :param data: A list of tuples, where each tuple is (entropy, probability)
     """
-    plt.rcParams.update({'font.size':15})
+    plt.rcParams.update({'font.size': 15})
     plt.figure(figsize=(15, 9))
     plt.xlabel('Entropy')
     plt.ylabel('Weighted Average Probability')
@@ -257,7 +259,8 @@ def plot_weight_avg(data, SAVE_PLOT=False):
 
         deviation = std_dev(probability)
         plt.plot(entropy, probability, marker='o', label=f'Sigma:{sigma:.2f}')
-        plt.fill_between(entropy, [x-deviation for x in probability], [x+deviation for x in probability], alpha=0.2)
+        plt.fill_between(entropy, [x-deviation for x in probability],
+                         [x+deviation for x in probability], alpha=0.2)
 
     plt.legend()
     os.makedirs('imgs/curves', exist_ok=True)
