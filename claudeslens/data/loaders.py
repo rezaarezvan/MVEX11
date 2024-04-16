@@ -48,18 +48,31 @@ class SODADataset(Dataset):
             'train', 'val'] else 'labeled_test'
         self.transform = transform
         self.annotations_file = f'instance_{split}.json'
+        self.targets = []
         self.images, self.annotations = self._load_annotations()
+        self.targets += [0] * (len(self.images) - len(self.targets))
 
     def _load_annotations(self):
         annotation_path = os.path.join(
             self.root_dir, self.subdir, 'SSLAD-2D', 'labeled', 'annotations', self.annotations_file)
 
-        load_categories(annotation_path)
         with open(annotation_path) as f:
             data = json.load(f)
 
         images = {image['id']: image for image in data['images']}
-        annotations = {anno['image_id']: anno for anno in data['annotations']}
+        annotations = {}
+        targets = []
+
+        for anno in data['annotations']:
+            image_id = anno['image_id']
+            if image_id in annotations:
+                continue
+
+            annotations[image_id] = anno
+            category_id = anno['category_id'] - 1
+            targets.append(category_id)
+
+        self.targets = targets
         return images, annotations
 
     def __len__(self):
@@ -120,7 +133,7 @@ def load_SODA(dataset_path, batch_size=32, ViT=False):
     test = DataLoader(test, batch_size=test_batch,
                       shuffle=True, num_workers=4, pin_memory=True)
 
-    return train, val, test
+    return train, val, val
 
 
 def load_MNIST(root_dir='../extra/datasets', batch_size=16, ViT=False, ConvNext=False):
