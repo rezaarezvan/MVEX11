@@ -9,9 +9,6 @@ from collections import defaultdict
 from tqdm.auto import tqdm
 from statistics import pstdev as std_dev
 
-plt.rcParams['text.usetex'] = True
-
-
 def plot_pair_entanglement(predictions_and_correct_label, threshold: float):
     """
     Visualises the pairs of most often interchanged predictions.
