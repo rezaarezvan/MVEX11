@@ -95,9 +95,9 @@ def plot_pair_entanglement(predictions_and_correct_label, threshold: float):
     plt.show()
 
 
-def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=False, type='weight', m='top'):
+def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=False, type='weight'):
     """
-    Plots the entropy, accuracy and certainty in a 3D plot.
+    Plots the entropy, accuracy and certainty in a 3D plot and 2D plot next to each other.
     """
     entropy, accuracy, certainty = zip(*ent_acc_cert)
 
@@ -108,23 +108,30 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
         "custom_cmap", colors, unique_labels)
 
     fig = plt.figure(figsize=(15, 9))
-    ax = fig.add_subplot(111, projection='3d')
+    fig.suptitle(
+        f'Entropy, Accuracy, and Certainty ($\\sigma$: {sigma}, Iterations: {iterations})')
+
+    ax = fig.add_subplot(1,2,1)
+    ax.scatter(accuracy, entropy, c=labels, cmap=custom_cmap)
+    ax.set_xlabel('Accuracy')
+    ax.set_ylabel('Entropy')
+    plot_bounds(classes=unique_labels)
+
+    ax = fig.add_subplot(1,2,2, projection='3d')
     im = ax.scatter3D(accuracy, entropy, certainty, c=labels, cmap=custom_cmap)
     ax.set_xlabel('Accuracy')
     ax.set_ylabel('Entropy')
     ax.set_zlabel('Certainty')
-    plt.title(
-        f'(Accuracy, Entropy, Certainty) ($\\sigma$: {sigma}, Iterations: {iterations})')
 
     cbar = fig.colorbar(im, ax=ax)
     cbar.set_label('Class index')
     cbar.set_ticklabels(range(unique_labels))
 
     plot_bounds(classes=unique_labels)
-    os.makedirs(f'imgs/entropies/{m}', exist_ok=True)
-    ax.view_init(elev=90, azim=-90) if m == "top" else ax.view_init(elev=25, azim=210)
+    os.makedirs(f'imgs/entropies/', exist_ok=True)
+    ax.view_init(elev=25, azim=210)
 
-    path = f'imgs/entropies/{m}/{type}_ent_acc_cert_sigma_{sigma:.2f}.pdf'
+    path = f'imgs/entropies/{type}_ent_acc_cert_sigma_{sigma:.2f}.pdf'
     plt.savefig(path) if SAVE_PLOT else plt.show()
 
 
