@@ -95,7 +95,7 @@ def plot_pair_entanglement(predictions_and_correct_label, threshold: float):
     plt.show()
 
 
-def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=False, type='weight'):
+def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=False, type='weight', m='top'):
     """
     Plots the entropy, accuracy and certainty in a 3D plot.
     """
@@ -121,10 +121,10 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     cbar.set_ticklabels(range(unique_labels))
 
     plot_bounds(classes=unique_labels)
-    os.makedirs('imgs/entropies', exist_ok=True)
-    ax.view_init(elev=25, azim=210)
+    os.makedirs(f'imgs/entropies/{m}', exist_ok=True)
+    ax.view_init(elev=90, azim=-90) if m == "top" else ax.view_init(elev=25, azim=210)
 
-    path = f'imgs/entropies/{type}_ent_acc_cert_sigma_{sigma:.2f}.pdf'
+    path = f'imgs/entropies/{m}/{type}_ent_acc_cert_sigma_{sigma:.2f}.pdf'
     plt.savefig(path) if SAVE_PLOT else plt.show()
 
 
