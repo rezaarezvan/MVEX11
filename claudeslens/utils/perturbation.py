@@ -221,18 +221,18 @@ def perturbation(model, test_loader, iters=20, sigmas=[0, 0.01, 0.1, 1], lambdas
     print("Weight Perturbation")
     for ent_acc_cert_weights, sigma in zip(EAC_weights, sigmas):
         plot_entropy_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
-                              iters, SAVE_PLOT=SAVE_PLOT, type='weight', m='top')
+                              iters, SAVE_PLOT=SAVE_PLOT, type='weight')
         plot_entropy_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
-                              iters, SAVE_PLOT=SAVE_PLOT, type='weight', m='iso')
+                              iters, SAVE_PLOT=SAVE_PLOT, type='weight')
         barplot_ent_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
                              SAVE_PLOT=SAVE_PLOT, type='weight')
 
     print("Image Perturbation")
     for ent_acc_cert_images, sigma in zip(EAC_images, sigmas):
         plot_entropy_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
-                              iters, SAVE_PLOT=SAVE_PLOT, type='image', m='top')
+                              iters, SAVE_PLOT=SAVE_PLOT, type='image')
         plot_entropy_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
-                              iters, SAVE_PLOT=SAVE_PLOT, type='image', m='iso')
+                              iters, SAVE_PLOT=SAVE_PLOT, type='image')
         barplot_ent_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
                              SAVE_PLOT=SAVE_PLOT, type='image')
     print("Pair Entanglement")
