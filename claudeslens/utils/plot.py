@@ -111,13 +111,13 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     fig.suptitle(
         f'Entropy, Accuracy, and Certainty ($\\sigma$: {sigma}, Iterations: {iterations})')
 
-    ax = fig.add_subplot(1,2,1)
+    ax = fig.add_subplot(1, 2, 1)
     ax.scatter(accuracy, entropy, c=labels, cmap=custom_cmap)
     ax.set_xlabel('Accuracy')
     ax.set_ylabel('Entropy')
     plot_bounds(classes=unique_labels)
 
-    ax = fig.add_subplot(1,2,2, projection='3d')
+    ax = fig.add_subplot(1, 2, 2, projection='3d')
     im = ax.scatter3D(accuracy, entropy, certainty, c=labels, cmap=custom_cmap)
     ax.set_xlabel('Accuracy')
     ax.set_ylabel('Entropy')
@@ -128,7 +128,7 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     cbar.set_ticklabels(range(unique_labels))
 
     plot_bounds(classes=unique_labels)
-    os.makedirs(f'imgs/entropies/', exist_ok=True)
+    os.makedirs('imgs/entropies/', exist_ok=True)
     ax.view_init(elev=25, azim=210)
 
     path = f'imgs/entropies/{type}_ent_acc_cert_sigma_{sigma:.2f}.pdf'
@@ -307,4 +307,28 @@ def visualize_attention_map(image, attention_map):
     plt.title('Attention Map')
     plt.colorbar()
 
+    plt.show()
+
+
+def visualize_feature_maps(images, feature_maps):
+    num_images = min(images.size(0), feature_maps.size(0))
+    fig, axes = plt.subplots(num_images, 2, figsize=(12, 6 * num_images))
+    for i in range(num_images):
+        ax = axes[i][0]
+        img = images[i].cpu().detach().permute(1, 2, 0).numpy()
+        ax.imshow(img)
+        ax.set_title('Original Image')
+        ax.axis('off')
+
+        ax = axes[i][1]
+        fmap = feature_maps[i].mean(0).cpu().detach().numpy()
+        fmap_norm = (fmap - fmap.min()) / (fmap.max() -
+                                           fmap.min() + 1e-5)
+        im = ax.imshow(fmap_norm, cmap='viridis', vmin=0,
+                       vmax=1)
+        ax.set_title('Feature Map')
+        ax.axis('off')
+        fig.colorbar(im, ax=ax, orientation='vertical')
+
+    plt.tight_layout()
     plt.show()

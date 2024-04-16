@@ -19,5 +19,17 @@ class ConvNext(nn.Module):
             nn.Linear(self.lastconv_output_channels, num_classes)
         )
 
+        self.saved_feature_maps = {}
+
     def forward(self, x):
-        return self.convnext(x)
+        handle = self.convnext.features[-1].register_forward_hook(
+            self.save_feature_maps_hook)
+        result = self.convnext(x)
+        handle.remove()
+
+        return result
+
+    def save_feature_maps_hook(self, module, input, output):
+        if 'last_conv_output' not in self.saved_feature_maps:
+            self.saved_feature_maps['last_conv_output'] = []
+        self.saved_feature_maps['last_conv_output'].append(output.detach())

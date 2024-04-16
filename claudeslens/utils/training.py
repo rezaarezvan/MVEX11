@@ -3,8 +3,10 @@ import torch
 import numpy as np
 import torch.nn as nn
 from tqdm.auto import tqdm
-from . import DEVICE, SEED
-from .plot import visualize_attention_map
+
+from claudeslens.models.vit_b_16 import CustomEncoderBlock
+from claudeslens.utils import DEVICE, SEED
+from claudeslens.utils.plot import visualize_attention_map, visualize_feature_maps
 
 torch.manual_seed(SEED)
 
@@ -24,6 +26,60 @@ def restore_parameters(model, original_params):
     """
     for param, original in zip(model.parameters(), original_params):
         param.copy_(original)
+
+
+def save_attention(model):
+    attention_weights = []
+    for module in model.modules():
+        if isinstance(module, torch.nn.MultiheadAttention):
+            weights = {
+                'in_proj_weight': module.in_proj_weight.clone(),
+                'in_proj_bias': module.in_proj_bias.clone(),
+                'out_proj_weight': module.out_proj.weight.clone(),
+                'out_proj_bias': module.out_proj.bias.clone()
+            }
+            attention_weights.append(weights)
+    return attention_weights
+
+
+def restore_attention(model, attention_weights):
+    weight_iter = iter(attention_weights)
+    for module in model.modules():
+        if isinstance(module, torch.nn.MultiheadAttention):
+            weights = next(weight_iter, None)
+            if weights is not None:
+                module.in_proj_weight.copy_(weights['in_proj_weight'])
+                module.in_proj_bias.copy_(weights['in_proj_bias'])
+                module.out_proj.weight.copy_(weights['out_proj_weight'])
+                module.out_proj.bias.copy_(weights['out_proj_bias'])
+            else:
+                raise RuntimeError(
+                    "Mismatch in the number of MultiheadAttention modules and saved weights.")
+
+
+def save_conv_weights(model):
+    weights = []
+    for module in model.modules():
+        if isinstance(module, nn.Conv2d):
+            weights.append({
+                'weight': module.weight.clone(),
+                'bias': module.bias.clone() if module.bias is not None else None
+            })
+    return weights
+
+
+def restore_conv_weights(model, saved_weights):
+    weight_iter = iter(saved_weights)
+    for module in model.modules():
+        if isinstance(module, nn.Conv2d):
+            current_weights = next(weight_iter, None)
+            if current_weights is not None:
+                module.weight.copy_(current_weights['weight'])
+                if current_weights['bias'] is not None:
+                    module.bias.copy_(current_weights['bias'])
+            else:
+                raise RuntimeError(
+                    "Mismatch in the number of Conv2d layers and saved weights.")
 
 
 def save_model(model, path):
@@ -52,6 +108,29 @@ def add_noise(model, sigma):
     for param in model.parameters():
         param += torch.randn_like(param) * sigma
     return model
+
+
+@torch.no_grad()
+def add_noise_attention(model, sigma):
+    """
+    Add noise to the model attention weights
+    """
+    for module in model.modules():
+        if isinstance(module, CustomEncoderBlock):
+            attention = module.encoder_block.self_attention
+
+            for param_name, param in attention.named_parameters():
+                if 'weight' in param_name:
+                    param += torch.randn_like(param) * sigma
+
+
+@torch.no_grad()
+def add_noise_conv_weights(model, sigma):
+    for module in model.modules():
+        if isinstance(module, nn.Conv2d):
+            module.weight += torch.randn_like(module.weight) * sigma
+            if module.bias is not None:
+                module.bias += torch.randn_like(module.bias) * sigma
 
 
 def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEntropyLoss(), writer=None):
@@ -128,3 +207,21 @@ def eval_attention(model, test_loader, n=3):
         image = image.unsqueeze(0)
         _, attention_map = model(image, need_weights=True)
         visualize_attention_map(image, attention_map)
+
+
+def eval_features(model, test_loader, n=3):
+    model.eval().to(DEVICE)
+    images = next(iter(test_loader))[0].to(DEVICE)
+    model.saved_feature_maps = {}
+
+    for image in images[:n]:
+        image = image.unsqueeze(0)
+        model(image)
+
+    if 'last_conv_output' in model.saved_feature_maps:
+        all_feature_maps = torch.cat(
+            model.saved_feature_maps['last_conv_output'], dim=0)
+        visualize_feature_maps(
+            images[:len(all_feature_maps)], all_feature_maps)
+    else:
+        print("No feature maps saved. Check the hook and model configuration.")

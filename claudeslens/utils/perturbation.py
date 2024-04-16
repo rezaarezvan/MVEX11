@@ -221,15 +221,25 @@ def perturbation(model, test_loader, iters=20, sigmas=[0, 0.01, 0.1, 1], lambdas
     print("Weight Perturbation")
     for ent_acc_cert_weights, sigma in zip(EAC_weights, sigmas):
         plot_entropy_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
-                              iters, SAVE_PLOT=SAVE_PLOT, type='weight')
+                              iters, SAVE_PLOT=SAVE_PLOT, type='weight', m='top')
+        plot_entropy_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
+                              iters, SAVE_PLOT=SAVE_PLOT, type='weight', m='iso')
         barplot_ent_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
                              SAVE_PLOT=SAVE_PLOT, type='weight')
 
     print("Image Perturbation")
     for ent_acc_cert_images, sigma in zip(EAC_images, sigmas):
         plot_entropy_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
-                              iters, SAVE_PLOT=SAVE_PLOT, type='image')
+                              iters, SAVE_PLOT=SAVE_PLOT, type='image', m='top')
+        plot_entropy_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
+                              iters, SAVE_PLOT=SAVE_PLOT, type='image', m='iso')
         barplot_ent_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
                              SAVE_PLOT=SAVE_PLOT, type='image')
     print("Pair Entanglement")
     print(pair_entaglement)
+
+    '''
+    For attention and feature maps:
+    if isinstance(model, ClaudesLens_ViT) or isinstance(model, Pretrained_ViT_B_16):
+        eval_attention(model, test_loader)
+    '''
