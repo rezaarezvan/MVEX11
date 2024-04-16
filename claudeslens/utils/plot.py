@@ -9,6 +9,7 @@ from collections import defaultdict
 from tqdm.auto import tqdm
 from statistics import pstdev as std_dev
 
+
 def plot_pair_entanglement(predictions_and_correct_label, threshold: float):
     """
     Visualises the pairs of most often interchanged predictions.
@@ -94,7 +95,7 @@ def plot_pair_entanglement(predictions_and_correct_label, threshold: float):
     plt.show()
 
 
-def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=False):
+def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=False, type='weight'):
     """
     Plots the entropy, accuracy and certainty in a 3D plot.
     """
@@ -122,11 +123,12 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     plot_bounds(classes=unique_labels)
     os.makedirs('imgs/entropies', exist_ok=True)
     ax.view_init(elev=25, azim=210)
-    plt.savefig(
-        f'imgs/entropies/entropy_prob_sigma_{sigma:.2f}.pdf') if SAVE_PLOT else plt.show()
+
+    path = f'imgs/entropies/{type}_ent_acc_cert_sigma_{sigma:.2f}.pdf'
+    plt.savefig(path) if SAVE_PLOT else plt.show()
 
 
-def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False):
+def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False, type='weight'):
     sums = defaultdict(lambda: np.zeros(3))
     counts = defaultdict(int)
 
@@ -153,8 +155,9 @@ def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False):
     plt.title('Average Accuracy, Certainty, and Entropy per Class')
     plt.legend(['Accuracy', 'Certainty', 'Entropy'])
     os.makedirs('imgs/entropies', exist_ok=True)
-    plt.savefig(
-        f'imgs/entropies/avg_ent_acc_cert_sigma_{sigma:.2f}.pdf') if SAVE_PLOT else plt.show()
+
+    path = f'imgs/entropies/{type}_avg_ent_acc_cert_sigma_{sigma:.2f}.pdf'
+    plt.savefig(path) if SAVE_PLOT else plt.show()
 
 
 def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=5, elev_increment=1, SAVE_GIF=True,
