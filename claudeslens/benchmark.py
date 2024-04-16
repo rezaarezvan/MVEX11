@@ -11,7 +11,7 @@ from claudeslens.models.claudeslens_vit import ClaudesLens_ViT
 from claudeslens.models.claudeslens_convnext import ClaudesLens_ConvNext
 from claudeslens.models.pretrained_convnext import Pretrained_ConvNext
 from claudeslens.models.claudeslens_logistic import ClaudesLens_Logistic
-from claudeslens.utils.training import train, save_model, load_model, eval_attention
+from claudeslens.utils.training import train, save_model, load_model
 from claudeslens.utils.perturbation import perturbation
 
 old_stdout = sys.stdout
@@ -143,8 +143,6 @@ def main():
             lambdas = [0.5, 1, 2]
             perturbation(model, test_loader, sigmas=sigmas,
                          lambdas=lambdas, SAVE_PLOT=args.save_plots)
-            if isinstance(model, ClaudesLens_ViT) or isinstance(model, Pretrained_ViT_B_16):
-                eval_attention(model, test_loader)
 
         log_file.close()
 
