@@ -128,10 +128,10 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     cbar.set_ticklabels(range(unique_labels))
 
     plot_bounds(classes=unique_labels)
-    os.makedirs(f'imgs/{model_name}', exist_ok=True)
+    os.makedirs(f'imgs/{model_name}/EAC/{type}/', exist_ok=True)
     ax.view_init(elev=25, azim=210)
     
-    path = f'imgs/{model_name}/{type}_ent_acc_cert_sigma_{sigma:.2f}.pdf'
+    path = f'imgs/{model_name}/EAC/{type}/eac_{sigma:.2f}.pdf'
     plt.savefig(path) if SAVE_PLOT else plt.show()
 
 
@@ -161,9 +161,9 @@ def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False, type='wei
     plt.ylabel('Percentage')
     plt.title('Average Accuracy, Certainty, and Entropy per Class')
     plt.legend(['Accuracy', 'Certainty', 'Entropy'])
-    os.makedirs(f'imgs/{model_name}', exist_ok=True)
+    os.makedirs(f'imgs/{model_name}/bar_plots/{type}', exist_ok=True)
 
-    path = f'imgs/{model_name}/{type}_avg_ent_acc_cert_sigma_{sigma:.2f}.pdf'
+    path = f'imgs/{model_name}/bar_plots/{type}/bar_{sigma:.2f}.pdf'
     plt.savefig(path) if SAVE_PLOT else plt.show()
 
 
@@ -270,8 +270,8 @@ def plot_weight_avg(data, SAVE_PLOT=False, model_name=None):
                          [x+deviation for x in probability], alpha=0.2)
 
     plt.legend()
-    os.makedirs(f'imgs/curves/{model_name}', exist_ok=True)
-    plt.savefig(f'imgs/curves/{model_name}/curves.pdf') if SAVE_PLOT else plt.show()
+    os.makedirs(f'imgs/{model_name}/weighted_avg', exist_ok=True)
+    plt.savefig(f'imgs/{model_name}/weighted_avg/curve.pdf') if SAVE_PLOT else plt.show()
 
 
 def visualize_attention_map(image, attention_map):
