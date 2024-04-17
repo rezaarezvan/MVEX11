@@ -3,39 +3,38 @@ import matplotlib.pyplot as plt
 
 activation_functions = {
     'sigmoid': {
-        'func': lambda x: 1 / (1 + np.exp(-x)),
-        'title': 'Sigmoid',
-        'label': '$\\sigma(x) = \\frac{1}{1+e^{-x}}$'
+        'func': lambda z: 1 / (1 + np.exp(-z)),
+        'title': 'Sigmoid Activation Function',
+        'label': '$\\sigma(z) = \\frac{1}{1+e^{-z}}$'
     },
     'tanh': {
         'func': np.tanh,
-        'title': 'Tanh',
-        'label': '$\\tanh(x)$'
+        'title': 'Hyperbolic Tangent Activation Function',
+        'label': '$\\tanh(z) = \\frac{e^z + e^{-z}}{e^z - e^{-z}}$'
     },
     'relu': {
-        'func': lambda x: np.maximum(0, x),
-        'title': 'ReLU',
-        'label': '$ReLU(x) = max(0, x)$'
+        'func': lambda z: np.maximum(0, z),
+        'title': 'Rectified Linear Unit Activation Function (ReLU)',
+        'label': '$ReLU(z) = max(0, z)$'
     },
     'gaussian': {
-        'func': lambda x: np.exp(-x**2),
-        'title': 'Gaussian',
-        'label': '$e^{-x^2}$'
+        'func': lambda z: np.exp(-z**2),
+        'title': 'Gaussian Activation Function',
+        'label': '$f(z) = \\exp(-z^2)$'
     }
 }
 
 
 def plot_activation_functions():
-    x = np.linspace(-10, 10, 1000)
+    z = np.linspace(-10, 10, 1000)
     plt.figure(figsize=(10, 8))
-    plt.rcParams['text.usetex'] = True
 
     for i, (_, value) in enumerate(activation_functions.items(), 1):
-        y = value['func'](x)
+        y = value['func'](z)
         plt.subplot(2, 2, i)
-        plt.plot(x, y, label=value['label'])
+        plt.plot(z, y, label=value['label'])
         plt.title(value['title'])
-        plt.xlabel('$x$')
+        plt.xlabel('$z$')
         plt.ylabel('$y$')
         plt.grid(True)
         plt.legend()
