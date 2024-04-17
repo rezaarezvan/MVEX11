@@ -95,7 +95,7 @@ def plot_pair_entanglement(predictions_and_correct_label, threshold: float):
     plt.show()
 
 
-def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=False, type='weight'):
+def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=False, type='weight', model_name=None):
     """
     Plots the entropy, accuracy and certainty in a 3D plot and 2D plot next to each other.
     """
@@ -128,14 +128,14 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     cbar.set_ticklabels(range(unique_labels))
 
     plot_bounds(classes=unique_labels)
-    os.makedirs('imgs/entropies/', exist_ok=True)
+    os.makedirs(f'imgs/{model_name}', exist_ok=True)
     ax.view_init(elev=25, azim=210)
-
-    path = f'imgs/entropies/{type}_ent_acc_cert_sigma_{sigma:.2f}.pdf'
+    
+    path = f'imgs/{model_name}/{type}_ent_acc_cert_sigma_{sigma:.2f}.pdf'
     plt.savefig(path) if SAVE_PLOT else plt.show()
 
 
-def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False, type='weight'):
+def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False, type='weight', model_name=None):
     sums = defaultdict(lambda: np.zeros(3))
     counts = defaultdict(int)
 
@@ -161,9 +161,9 @@ def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False, type='wei
     plt.ylabel('Percentage')
     plt.title('Average Accuracy, Certainty, and Entropy per Class')
     plt.legend(['Accuracy', 'Certainty', 'Entropy'])
-    os.makedirs('imgs/entropies', exist_ok=True)
+    os.makedirs(f'imgs/{model_name}', exist_ok=True)
 
-    path = f'imgs/entropies/{type}_avg_ent_acc_cert_sigma_{sigma:.2f}.pdf'
+    path = f'imgs/{model_name}/{type}_avg_ent_acc_cert_sigma_{sigma:.2f}.pdf'
     plt.savefig(path) if SAVE_PLOT else plt.show()
 
 
@@ -245,7 +245,7 @@ def plot_bounds(classes):
     plt.plot([0, 0], [0, y2[0]], color="orange")
 
 
-def plot_weight_avg(data, SAVE_PLOT=False):
+def plot_weight_avg(data, SAVE_PLOT=False, model_name=None):
     """
     Plots the weighted averages of probabilities for specified windows of entropy.
 
@@ -270,8 +270,8 @@ def plot_weight_avg(data, SAVE_PLOT=False):
                          [x+deviation for x in probability], alpha=0.2)
 
     plt.legend()
-    os.makedirs('imgs/curves', exist_ok=True)
-    plt.savefig(f'imgs/curves/curves.pdf') if SAVE_PLOT else plt.show()
+    os.makedirs(f'imgs/curves/{model_name}', exist_ok=True)
+    plt.savefig(f'imgs/curves/{model_name}/curves.pdf') if SAVE_PLOT else plt.show()
 
 
 def visualize_attention_map(image, attention_map):

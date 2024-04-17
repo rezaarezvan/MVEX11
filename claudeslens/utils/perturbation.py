@@ -216,21 +216,21 @@ def perturbation(model, test_loader, iters=20, sigmas=[0, 0.01, 0.1, 1], lambdas
 
     best_psi, best_sigma = max_psi_sigma(psi_list, sigmas)
     print(f"Max: (ψ: {best_psi}, σ: {best_sigma})")
-    plot_weight_avg(weighted_average, SAVE_PLOT=SAVE_PLOT)
+    plot_weight_avg(weighted_average, SAVE_PLOT=SAVE_PLOT, model_name=model.__class__.__name__)
 
     print("Weight Perturbation")
     for ent_acc_cert_weights, sigma in zip(EAC_weights, sigmas):
         plot_entropy_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
-                              iters, SAVE_PLOT=SAVE_PLOT, type='weight')
+                              iters, SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
         barplot_ent_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
-                             SAVE_PLOT=SAVE_PLOT, type='weight')
+                             SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
 
     print("Image Perturbation")
     for ent_acc_cert_images, sigma in zip(EAC_images, sigmas):
         plot_entropy_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
-                              iters, SAVE_PLOT=SAVE_PLOT, type='image')
+                              iters, SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
         barplot_ent_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
-                             SAVE_PLOT=SAVE_PLOT, type='image')
+                             SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
     print("Pair Entanglement")
     print(pair_entaglement)
 
