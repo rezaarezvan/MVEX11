@@ -5,14 +5,10 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from claudeslens.data.loaders import load_SODA, load_MNIST
-from claudeslens.models.pretrained_vit import Pretrained_ViT_B_16
-from claudeslens.models.claudeslens_vit import ClaudesLens_ViT
-from claudeslens.models.claudeslens_convnext import ClaudesLens_ConvNext
-from claudeslens.models.pretrained_convnext import Pretrained_ConvNext
-from claudeslens.models.claudeslens_logistic import ClaudesLens_Logistic
-from claudeslens.utils.training import train, save_model, load_model
 from claudeslens.utils.perturbation import perturbation
+from claudeslens.data.loaders import load_SODA, load_MNIST
+from claudeslens.utils.training import train, save_model, load_model
+from claudeslens.models import Pretrained_ViT_B_16, ClaudesLens_ViT, Pretrained_ConvNext, ClaudesLens_ConvNext, ClaudesLens_Logistic
 
 old_stdout = sys.stdout
 
