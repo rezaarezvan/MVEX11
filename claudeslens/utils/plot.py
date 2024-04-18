@@ -109,7 +109,7 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
 
     fig = plt.figure(figsize=(15, 9))
     fig.suptitle(
-        f'Entropy, Accuracy, and Certainty ($\\sigma$: {sigma}, Iterations: {iterations})')
+        f'Entropy, Accuracy, and Certainty ($\\sigma$: {sigma:.3f}, Iterations: {iterations})')
 
     ax = fig.add_subplot(1, 2, 1)
     ax.scatter(accuracy, entropy, c=labels, cmap=custom_cmap)
@@ -130,8 +130,8 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     plot_bounds(classes=unique_labels)
     os.makedirs(f'imgs/{model_name}/EAC/{type}/', exist_ok=True)
     ax.view_init(elev=25, azim=210)
-    
-    path = f'imgs/{model_name}/EAC/{type}/eac_{sigma:.2f}.pdf'
+
+    path = f'imgs/{model_name}/EAC/{type}/eac_{sigma:.3f}.pdf'
     plt.savefig(path) if SAVE_PLOT else plt.show()
 
 
@@ -163,7 +163,7 @@ def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False, type='wei
     plt.legend(['Accuracy', 'Certainty', 'Entropy'])
     os.makedirs(f'imgs/{model_name}/bar_plots/{type}', exist_ok=True)
 
-    path = f'imgs/{model_name}/bar_plots/{type}/bar_{sigma:.2f}.pdf'
+    path = f'imgs/{model_name}/bar_plots/{type}/bar_{sigma:.3f}.pdf'
     plt.savefig(path) if SAVE_PLOT else plt.show()
 
 

@@ -61,7 +61,7 @@ def weight_avg(data, window_size=0.25):
 
         # Print the weighted average for the current window
         print(
-            f"Interval [{start:.2f}, {end:.2f}], Weighted Average: [{weighted_average_filtered:.2f}]")
+            f"Interval [{start:.3f}, {end:.3f}], Weighted Average: [{weighted_average_filtered:.3f}]")
         result.append(((start+end)/2, weighted_average_filtered))
         start += window_size
 
