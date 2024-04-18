@@ -37,7 +37,7 @@ def plot_activation_functions():
         plt.xlabel('$z$')
         plt.ylabel('$y$')
         plt.grid(True)
-        plt.legend()
+        plt.legend(handlelength=0, handletextpad=0, loc='upper left')
 
     plt.tight_layout()
     plt.savefig('activation_functions.pdf')
