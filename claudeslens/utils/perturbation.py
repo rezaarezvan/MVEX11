@@ -25,13 +25,13 @@ def evaluate_robustness(model, test_loader, og_acc, sigma=0, iters=10):
     model.eval().to(DEVICE)
     pi_list = []
     for _ in range(iters):
-        original_params = save_parameters(model)
-        add_noise(model, sigma)
+        noise = add_noise(model, sigma)
 
         acc = evaluate(model, test_loader)
         pi_list.append(pi(og_acc, acc))
 
-        restore_parameters(model, original_params)
+        remove_noise(model, noise)
+        torch.cuda.empty_cache()
 
     pi_mean = sum(pi_list) / len(pi_list)
     return pi_mean
@@ -51,8 +51,7 @@ def evaluate_pair_entanglement(model, test_loader, sigma, threshold, iters):
         probs = []
         images, labels = images.to(DEVICE), labels.to(DEVICE)
         for _ in range(iters):
-            original_params = save_parameters(model)
-            add_noise(model, sigma)
+            noise = add_noise(model, sigma)
 
             outputs = model(images)
             predicted = outputs.argmax(dim=1)
@@ -61,7 +60,8 @@ def evaluate_pair_entanglement(model, test_loader, sigma, threshold, iters):
             predictions.append(predicted)
             probs.append(correct_class_probs)
 
-            restore_parameters(model, original_params)
+            remove_noise(model, noise)
+            torch.cuda.empty_cache()
 
         all_predictions = torch.stack(predictions, dim=1)
 
@@ -119,8 +119,7 @@ def evaluate_weight_perturbation(model, test_loader, sigma=0, iters=10):
         probs = []
         images, labels = images.to(DEVICE), labels.to(DEVICE)
         for _ in range(iters):
-            original_params = save_parameters(model)
-            add_noise(model, sigma)
+            noise = add_noise(model, sigma)
 
             outputs = model(images)
             preds = outputs.argmax(dim=1)
@@ -130,7 +129,8 @@ def evaluate_weight_perturbation(model, test_loader, sigma=0, iters=10):
             predictions.append(preds)
             probs.append(correct_class_probs)
 
-            restore_parameters(model, original_params)
+            remove_noise(model, noise)
+            torch.cuda.empty_cache()
 
         pred_matrix = torch.stack(predictions, dim=1)
         prob = torch.stack(probs).mean(dim=0)
@@ -226,13 +226,30 @@ def perturbation(model, test_loader, iters=20, sigmas=[0, 0.01, 0.1, 1], lambdas
 
     best_psi, best_sigma = max_psi_sigma(psi_list, sigmas)
     print(f"Max: (ψ: {best_psi}, σ: {best_sigma})")
-    plot_weight_avg(weighted_average, SAVE_PLOT=SAVE_PLOT, model_name=model.__class__.__name__)
+    plot_weight_avg(weighted_average, SAVE_PLOT=SAVE_PLOT,
+                    model_name=model.__class__.__name__)
 
     print("Pair Entanglement")
     print(pair_entaglement)
 
-    '''
-    For attention and feature maps:
-    if isinstance(model, ClaudesLens_ViT) or isinstance(model, Pretrained_ViT_B_16):
-        eval_attention(model, test_loader)
-    '''
+    # For attention and feature maps:
+
+    # if isinstance(model, ClaudesLens_ViT) or isinstance(model, Pretrained_ViT_B_16):
+    #     for sigma in sigmas:
+    #         eval_attention(model, test_loader, n=3)
+    #
+    #         noise = add_noise_attention(model, sigma)
+    #
+    #         eval_attention(model, test_loader, n=3)
+    #
+    #         remove_noise_attention(model, noise)
+
+    # if isinstance(model, ClaudesLens_ConvNext) or isinstance(model, Pretrained_ConvNext):
+    #     for sigma in sigmas:
+    #         eval_features(model, test_loader, n=3)
+    #
+    #         noise = add_noise_attention(model, sigma)
+    #
+    #         eval_features(model, test_loader, n=3)
+    #
+    #         remove_noise_attention(model, noise)

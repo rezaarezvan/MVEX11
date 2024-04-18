@@ -11,75 +11,85 @@ from claudeslens.utils.plot import visualize_attention_map, visualize_feature_ma
 torch.manual_seed(SEED)
 
 
-def save_parameters(model):
-    """
-    Save the model parameters
-    """
-    original_params = [param.clone() for param in model.parameters()]
-    return original_params
+@torch.no_grad()
+def add_noise(model, sigma):
+    noise_data = []
+    for param in model.parameters():
+        noise = torch.randn_like(param) * sigma
+        param.add_(noise)
+        noise_data.append(noise)
+    return noise_data
 
 
 @torch.no_grad()
-def restore_parameters(model, original_params):
+def remove_noise(model, noise_data):
+    for param, noise in zip(model.parameters(), noise_data):
+        param.sub_(noise)
+
+
+@torch.no_grad()
+def add_noise_attention(model, sigma):
     """
-    Restore the model parameters to the original values
+    Add noise to the model attention weights
     """
-    for param, original in zip(model.parameters(), original_params):
-        param.copy_(original)
-
-
-def save_attention(model):
-    attention_weights = []
+    noise_data = []
     for module in model.modules():
-        if isinstance(module, torch.nn.MultiheadAttention):
-            weights = {
-                'in_proj_weight': module.in_proj_weight.clone(),
-                'in_proj_bias': module.in_proj_bias.clone(),
-                'out_proj_weight': module.out_proj.weight.clone(),
-                'out_proj_bias': module.out_proj.bias.clone()
-            }
-            attention_weights.append(weights)
-    return attention_weights
+        if isinstance(module, CustomEncoderBlock):
+            attention = module.encoder_block.self_attention
+            for param_name, param in attention.named_parameters():
+                if 'weight' in param_name:
+                    noise = torch.randn_like(param) * sigma
+                    param.add_(noise)
+                    noise_data.append(noise)
+    return noise_data
 
 
-def restore_attention(model, attention_weights):
-    weight_iter = iter(attention_weights)
-    for module in model.modules():
-        if isinstance(module, torch.nn.MultiheadAttention):
-            weights = next(weight_iter, None)
-            if weights is not None:
-                module.in_proj_weight.copy_(weights['in_proj_weight'])
-                module.in_proj_bias.copy_(weights['in_proj_bias'])
-                module.out_proj.weight.copy_(weights['out_proj_weight'])
-                module.out_proj.bias.copy_(weights['out_proj_bias'])
-            else:
-                raise RuntimeError(
-                    "Mismatch in the number of MultiheadAttention modules and saved weights.")
-
-
-def save_conv_weights(model):
-    weights = []
+@torch.no_grad()
+def add_noise_conv_weights(model, sigma):
+    noise_data = []
     for module in model.modules():
         if isinstance(module, nn.Conv2d):
-            weights.append({
-                'weight': module.weight.clone(),
-                'bias': module.bias.clone() if module.bias is not None else None
-            })
-    return weights
+            noise = torch.randn_like(module.weight) * sigma
+            module.weight.add_(noise)
+            noise_data.append(noise)
+            if module.bias is not None:
+                noise = torch.randn_like(module.bias) * sigma
+                module.bias.add_(noise)
+                noise_data.append(noise)
+    return noise_data
 
 
-def restore_conv_weights(model, saved_weights):
-    weight_iter = iter(saved_weights)
+def remove_noise_attention(model, noise_data):
+    """
+    Remove noise from the model attention weights
+    """
+    noise_iter = iter(noise_data)
+    for module in model.modules():
+        if isinstance(module, CustomEncoderBlock):
+            attention = module.encoder_block.self_attention
+            for param_name, param in attention.named_parameters():
+                if 'weight' in param_name:
+                    noise = next(noise_iter, None)
+                    if noise is not None:
+                        param.sub_(noise)
+                    else:
+                        raise RuntimeError(
+                            "Mismatch in the number of attention weights and saved noise.")
+
+
+def remove_noise_conv_weights(model, noise_data):
+    noise_iter = iter(noise_data)
     for module in model.modules():
         if isinstance(module, nn.Conv2d):
-            current_weights = next(weight_iter, None)
-            if current_weights is not None:
-                module.weight.copy_(current_weights['weight'])
-                if current_weights['bias'] is not None:
-                    module.bias.copy_(current_weights['bias'])
+            noise = next(noise_iter, None)
+            if noise is not None:
+                module.weight.sub_(noise)
+                if module.bias is not None:
+                    noise = next(noise_iter, None)
+                    module.bias.sub_(noise)
             else:
                 raise RuntimeError(
-                    "Mismatch in the number of Conv2d layers and saved weights.")
+                    "Mismatch in the number of Conv2d layers and saved noise.")
 
 
 def save_model(model, path):
@@ -98,39 +108,6 @@ def load_model(model, path):
     model.load_state_dict(torch.load(path, map_location=DEVICE))
     print(f'Model loaded from {path}')
     return model
-
-
-@torch.no_grad()
-def add_noise(model, sigma):
-    """
-    Add noise to the model parameters
-    """
-    for param in model.parameters():
-        param += torch.randn_like(param) * sigma
-    return model
-
-
-@torch.no_grad()
-def add_noise_attention(model, sigma):
-    """
-    Add noise to the model attention weights
-    """
-    for module in model.modules():
-        if isinstance(module, CustomEncoderBlock):
-            attention = module.encoder_block.self_attention
-
-            for param_name, param in attention.named_parameters():
-                if 'weight' in param_name:
-                    param += torch.randn_like(param) * sigma
-
-
-@torch.no_grad()
-def add_noise_conv_weights(model, sigma):
-    for module in model.modules():
-        if isinstance(module, nn.Conv2d):
-            module.weight += torch.randn_like(module.weight) * sigma
-            if module.bias is not None:
-                module.bias += torch.randn_like(module.bias) * sigma
 
 
 def train(model, train_loader, test_loader, optim, epochs=40, lossfn=nn.CrossEntropyLoss(), writer=None):
