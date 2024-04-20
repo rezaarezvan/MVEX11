@@ -134,9 +134,8 @@ def main():
         if args.save_weights:
             save_model(model, pth)
         if args.benchmark:
-            temp_sigmas = [x * 0.1 for x in range(1, 11)]
-            sigmas = [0.01, 0.015, 0.02, 0.025] + temp_sigmas + [1, 5, 50, 100]
-            lambdas = [0.5, 1, 2]
+            sigmas = [0.1, 0.5, 1, 10]
+            lambdas = [0.1, 0.5, 1, 2]
             perturbation(model, test_loader, sigmas=sigmas,
                          lambdas=lambdas, SAVE_PLOT=args.save_plots)
 
