@@ -180,7 +180,7 @@ def evaluate_image_perturbation(model, test_loader, sigma=0, iters=10):
     return result
 
 
-def perturbation(model, test_loader, iters=20, sigmas=[0, 0.01, 0.1, 1], lambdas=[0.1, 0.5, 1], entropy_window_size=0.1,
+def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas=[0.1, 0.5, 1], entropy_window_size=0.1,
                  SAVE_PLOT=True):
     """
     Main evaluation loop for the perturbation tests for the model
@@ -208,9 +208,9 @@ def perturbation(model, test_loader, iters=20, sigmas=[0, 0.01, 0.1, 1], lambdas
 
         print("Weight Perturbation")
         plot_entropy_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
-                            iters, SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
+                              iters, SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
         barplot_ent_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
-                            SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
+                             SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
 
         print("Image Perturbation")
         plot_entropy_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
