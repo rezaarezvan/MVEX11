@@ -189,16 +189,7 @@ def eval_attention(model, test_loader, n=3):
 def eval_features(model, test_loader, n=3):
     model.eval().to(DEVICE)
     images = next(iter(test_loader))[0].to(DEVICE)
-    model.saved_feature_maps = {}
-
     for image in images[:n]:
         image = image.unsqueeze(0)
-        model(image)
-
-    if 'last_conv_output' in model.saved_feature_maps:
-        all_feature_maps = torch.cat(
-            model.saved_feature_maps['last_conv_output'], dim=0)
-        visualize_feature_maps(
-            images[:len(all_feature_maps)], all_feature_maps)
-    else:
-        print("No feature maps saved. Check the hook and model configuration.")
+        model(image, return_features=True)
+        visualize_feature_maps(model.feature_maps)

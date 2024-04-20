@@ -271,7 +271,8 @@ def plot_weight_avg(data, SAVE_PLOT=False, model_name=None):
 
     plt.legend()
     os.makedirs(f'imgs/{model_name}/weighted_avg', exist_ok=True)
-    plt.savefig(f'imgs/{model_name}/weighted_avg/curve.pdf') if SAVE_PLOT else plt.show()
+    plt.savefig(
+        f'imgs/{model_name}/weighted_avg/curve.pdf') if SAVE_PLOT else plt.show()
 
 
 def visualize_attention_map(image, attention_map):
@@ -310,25 +311,19 @@ def visualize_attention_map(image, attention_map):
     plt.show()
 
 
-def visualize_feature_maps(images, feature_maps):
-    num_images = min(images.size(0), feature_maps.size(0))
-    fig, axes = plt.subplots(num_images, 2, figsize=(12, 6 * num_images))
-    for i in range(num_images):
-        ax = axes[i][0]
-        img = images[i].cpu().detach().permute(1, 2, 0).numpy()
-        ax.imshow(img)
-        ax.set_title('Original Image')
-        ax.axis('off')
+def visualize_feature_maps(feature_maps):
+    for layer_idx, fmap in feature_maps.items():
+        plt.figure(figsize=(15, 9))
+        layer_fmaps = fmap[0]
+        n_features = layer_fmaps.shape[0]
 
-        ax = axes[i][1]
-        fmap = feature_maps[i].mean(0).cpu().detach().numpy()
-        fmap_norm = (fmap - fmap.min()) / (fmap.max() -
-                                           fmap.min() + 1e-5)
-        im = ax.imshow(fmap_norm, cmap='viridis', vmin=0,
-                       vmax=1)
-        ax.set_title('Feature Map')
-        ax.axis('off')
-        fig.colorbar(im, ax=ax, orientation='vertical')
+        n_cols = int(np.sqrt(n_features))
+        n_rows = (n_features + n_cols - 1) // n_cols
 
-    plt.tight_layout()
-    plt.show()
+        for idx in range(n_features):
+            ax = plt.subplot(n_rows, n_cols, idx + 1)
+            ax.imshow(layer_fmaps[idx].cpu().numpy(), cmap='viridis')
+            ax.axis('off')
+
+        plt.suptitle(f"Feature Maps at Layer {layer_idx}")
+        plt.show()
