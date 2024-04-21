@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 
 from tqdm.auto import tqdm
 from collections import defaultdict
-from statistics import pstdev as std_dev
 from matplotlib.colors import LinearSegmentedColormap
 
 
@@ -266,7 +265,7 @@ def plot_weight_avg(data, SAVE_PLOT=False, model_name=None):
 
         entropy, probability = list(entropy), list(probability)
 
-        deviation = std_dev(probability)
+        deviation = np.std(probability)
         plt.plot(entropy, probability, marker='o', label=f'Sigma:{sigma:.2f}')
         plt.fill_between(entropy, [x-deviation for x in probability],
                          [x+deviation for x in probability], alpha=0.2)
