@@ -25,12 +25,12 @@ def evaluate_robustness(model, test_loader, og_acc, sigma=0, iters=10):
     model.eval().to(DEVICE)
     pi_list = []
     for _ in range(iters):
-        noise = add_noise(model, sigma)
+        noise_data = add_noise(model, sigma)
 
         acc = evaluate(model, test_loader)
         pi_list.append(pi(og_acc, acc))
 
-        remove_noise(model, noise)
+        remove_noise(model, noise_data)
         torch.cuda.empty_cache()
 
     pi_mean = sum(pi_list) / len(pi_list)
@@ -189,6 +189,7 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
     psi_list = []
     pair_entaglement = []
     og_acc = evaluate(model, test_loader)
+    print(f"Original Accuracy: {og_acc}")
 
     for sigma in sigmas:
         pi = evaluate_robustness(model, test_loader, og_acc,
