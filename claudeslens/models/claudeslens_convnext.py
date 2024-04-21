@@ -1,5 +1,5 @@
 import torch.nn as nn
-from .convnext_base import ConvNext
+from claudeslens.models.convnext_base import ConvNext
 
 
 class ClaudesLens_ConvNext(ConvNext):

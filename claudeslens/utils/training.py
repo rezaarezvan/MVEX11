@@ -44,21 +44,6 @@ def add_noise_attention(model, sigma):
     return noise_data
 
 
-@torch.no_grad()
-def add_noise_conv_weights(model, sigma):
-    noise_data = []
-    for module in model.modules():
-        if isinstance(module, nn.Conv2d):
-            noise = torch.randn_like(module.weight) * sigma
-            module.weight.add_(noise)
-            noise_data.append(noise)
-            if module.bias is not None:
-                noise = torch.randn_like(module.bias) * sigma
-                module.bias.add_(noise)
-                noise_data.append(noise)
-    return noise_data
-
-
 def remove_noise_attention(model, noise_data):
     """
     Remove noise from the model attention weights
@@ -75,6 +60,21 @@ def remove_noise_attention(model, noise_data):
                     else:
                         raise RuntimeError(
                             "Mismatch in the number of attention weights and saved noise.")
+
+
+@torch.no_grad()
+def add_noise_conv_weights(model, sigma):
+    noise_data = []
+    for module in model.modules():
+        if isinstance(module, nn.Conv2d):
+            noise = torch.randn_like(module.weight) * sigma
+            module.weight.add_(noise)
+            noise_data.append(noise)
+            if module.bias is not None:
+                noise = torch.randn_like(module.bias) * sigma
+                module.bias.add_(noise)
+                noise_data.append(noise)
+    return noise_data
 
 
 def remove_noise_conv_weights(model, noise_data):

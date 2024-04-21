@@ -1,4 +1,4 @@
-from .convnext_base import ConvNext
+from claudeslens.models.convnext_base import ConvNext
 
 
 class Pretrained_ConvNext(ConvNext):

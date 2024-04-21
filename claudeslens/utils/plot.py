@@ -3,11 +3,11 @@ import torch
 import imageio
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
-from mpl_toolkits.mplot3d import Axes3D
-from collections import defaultdict
+
 from tqdm.auto import tqdm
+from collections import defaultdict
 from statistics import pstdev as std_dev
+from matplotlib.colors import LinearSegmentedColormap
 
 
 def plot_pair_entanglement(predictions_and_correct_label, threshold: float):
@@ -101,7 +101,8 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     """
     entropy, accuracy, certainty = zip(*ent_acc_cert)
 
-    unique_labels = len(torch.cat([torch.tensor(labels)]).unique())
+    unique_labels = len(set(labels.tolist())) if isinstance(
+        labels, torch.Tensor) else len(set(labels))
     color_map = plt.get_cmap('tab20')
     colors = [color_map(i) for i in range(unique_labels)]
     custom_cmap = LinearSegmentedColormap.from_list(
@@ -125,6 +126,7 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
 
     cbar = fig.colorbar(im, ax=ax)
     cbar.set_label('Class index')
+    cbar.set_ticks(range(unique_labels))
     cbar.set_ticklabels(range(unique_labels))
 
     plot_bounds(classes=unique_labels)

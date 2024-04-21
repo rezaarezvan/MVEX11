@@ -1,5 +1,5 @@
 import torch.nn as nn
-from .vit_b_16 import Pretrained_ViT
+from claudeslens.models.vit_b_16 import Pretrained_ViT
 
 
 class ClaudesLens_ViT(Pretrained_ViT):

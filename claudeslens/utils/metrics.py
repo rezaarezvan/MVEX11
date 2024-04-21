@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from torch.distributions import Categorical
-from . import SEED
+from claudeslens.utils import SEED
 
 torch.manual_seed(SEED)
 

@@ -1,4 +1,4 @@
-from .vit_b_16 import Pretrained_ViT
+from claudeslens.models.vit_b_16 import Pretrained_ViT
 
 
 class Pretrained_ViT_B_16(Pretrained_ViT):
