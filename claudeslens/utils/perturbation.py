@@ -1,3 +1,4 @@
+import json
 import torch
 import torch.nn as nn
 from tqdm.auto import tqdm
@@ -10,8 +11,6 @@ from claudeslens.models import Pretrained_ViT_B_16, ClaudesLens_ViT, Pretrained_
 from claudeslens.utils.training import evaluate, add_noise, remove_noise, eval_attention, add_noise_attention, remove_noise_attention, eval_features, add_noise_conv_weights, remove_noise_conv_weights
 
 torch.manual_seed(SEED)
-
-import json
 
 """
 Everything calculated in this file is done batch-wise.
@@ -210,12 +209,12 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
         pair_entaglement.append(matrix_with_correct_label)
 
         print("Weight Perturbation")
-		plot_entropy_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
+        plot_entropy_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
                               iters, SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
         barplot_ent_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
                              SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
 
-        print("Image Perturbation")		
+        print("Image Perturbation")
         plot_entropy_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
                               iters, SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
         barplot_ent_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
@@ -234,38 +233,38 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
 
     print("Pair Entanglement")
     print(pair_entaglement)
-	
-	ent_acc_cert_data = {
-		"ent_acc_cert_weights": ent_acc_cert_weights,
-		"ent_acc_cert_images": ent_acc_cert_images,
-		"weighted_average": weighted_average,
-		"matrix_with_correct_label": matrix_with_correct_label,
-		"test_loader.dataset.targets": test_loader.dataset.targets,
-		"sigma": sigma,
-		"iters": iters,
-		"model_name": model.__class__.__name__
+    
+    ent_acc_cert_data = {
+        "ent_acc_cert_weights": ent_acc_cert_weights,
+	    "ent_acc_cert_images": ent_acc_cert_images,
+	    "weighted_average": weighted_average,
+	    "matrix_with_correct_label": matrix_with_correct_label,
+        #"test_loader.dataset.targets": test_loader.dataset.targets,
+	    "sigma": sigma,
+	    "iters": iters,
+	    "model_name": model.__class__.__name__
 	}
 
-	json.dump(open("ent_acc_cert_data.json", "w"), indent=4)
+    json.dump(ent_acc_cert_data,open("ent_acc_cert_data.json", "w"), indent=4)
 
     # For attention and feature maps:
 
-    # if isinstance(model, ClaudesLens_ViT) or isinstance(model, Pretrained_ViT_B_16):
-    #     for sigma in sigmas:
-    #         eval_attention(model, test_loader, n=3)
-    #
-    #         noise = add_noise_attention(model, sigma)
-    #
-    #         eval_attention(model, test_loader, n=3)
-    #
-    #         remove_noise_attention(model, noise)
+    if isinstance(model, ClaudesLens_ViT) or isinstance(model, Pretrained_ViT_B_16):
+        for sigma in sigmas:
+            eval_attention(model, test_loader, n=3, sigma=sigma, SAVE_PLOT=SAVE_PLOT)
+    
+            noise = add_noise_attention(model, sigma)
+    
+            eval_attention(model, test_loader, n=3, sigma=sigma, SAVE_PLOT=SAVE_PLOT)
+    
+            remove_noise_attention(model, noise)
 
-    # if isinstance(model, ClaudesLens_ConvNext) or isinstance(model, Pretrained_ConvNext):
-    #     for sigma in sigmas:
-    #         eval_features(model, test_loader, n=3)
-    #
-    #         noise = add_noise_attention(model, sigma)
-    #
-    #         eval_features(model, test_loader, n=3)
-    #
-    #         remove_noise_attention(model, noise)
+    if isinstance(model, ClaudesLens_ConvNext) or isinstance(model, Pretrained_ConvNext):
+        for sigma in sigmas:
+            eval_features(model, test_loader, n=3, sigma=sigma, SAVE_PLOT=SAVE_PLOT)
+    
+            noise = add_noise_conv_weights(model, sigma)
+    
+            eval_features(model, test_loader, n=3, sigma=sigma, SAVE_PLOT=SAVE_PLOT)
+    
+            remove_noise_conv_weights(model, noise)

@@ -177,19 +177,19 @@ def evaluate(model, test_loader, writer=None, global_step=None):
     return avg_accuracy
 
 
-def eval_attention(model, test_loader, n=3):
+def eval_attention(model, test_loader, n=3,sigma=0, SAVE_PLOT=False):
     model.eval().to(DEVICE)
     images = next(iter(test_loader))[0].to(DEVICE)
-    for image in images[:n]:
+    for idx, image in enumerate(images[:n]):
         image = image.unsqueeze(0)
         _, attention_map = model(image, need_weights=True)
-        visualize_attention_map(image, attention_map)
+        visualize_attention_map(image, attention_map, sigma, SAVE_PLOT, model.__class__.__name__, idx)
 
 
-def eval_features(model, test_loader, n=3):
+def eval_features(model, test_loader, n=3, sigma=0, SAVE_PLOT=False):
     model.eval().to(DEVICE)
     images = next(iter(test_loader))[0].to(DEVICE)
-    for image in images[:n]:
+    for idx, image in enumerate(images[:n]):
         image = image.unsqueeze(0)
         model(image, return_features=True)
-        visualize_feature_maps(model.feature_maps)
+        visualize_feature_maps(model.feature_maps, sigma, SAVE_PLOT, model.__class__.__name__, idx)

@@ -107,6 +107,7 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     custom_cmap = LinearSegmentedColormap.from_list(
         "custom_cmap", colors, unique_labels)
 
+    plt.rcParams.update({'font.size': 15})
     fig = plt.figure(figsize=(15, 9))
     fig.suptitle(
         f'Entropy, Accuracy, and Certainty ($\\sigma$: {sigma:.3f}, Iterations: {iterations})')
@@ -276,7 +277,7 @@ def plot_weight_avg(data, SAVE_PLOT=False, model_name=None):
         f'imgs/{model_name}/weighted_avg/curve.pdf') if SAVE_PLOT else plt.show()
 
 
-def visualize_attention_map(image, attention_map):
+def visualize_attention_map(image, attention_map, sigma, SAVE_PLOT, model_name, idx):
     attention_map = attention_map.mean(dim=1)
     attention_map_no_class_token = attention_map[:, 1:, 1:]
     attention_map_single = attention_map_no_class_token[0]
@@ -295,24 +296,30 @@ def visualize_attention_map(image, attention_map):
 
     attention_map_np = attention_map_resized.detach().cpu().numpy()
 
-    plt.subplot(1, 2, 1)
-    plt.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy())
-    plt.axis('off')
-    plt.title('Original Image')
-    plt.colorbar()
+    plt.rcParams.update({'font.size': 15})
+    fig = plt.figure(figsize=(15,9))
+    fig.suptitle(f'$\\sigma$: {sigma}')
+    ax = plt.subplot(1, 2, 1)
+    im = ax.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy())
+    ax.axis('off')
+    ax.set_title('Original Image')
+    cbar = fig.colorbar(im, ax=ax)
 
-    plt.subplot(1, 2, 2)
-    plt.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy(), alpha=0.8)
-    plt.imshow(attention_map_np, cmap='hot',
-               interpolation='nearest', alpha=0.3)
-    plt.axis('off')
-    plt.title('Attention Map')
-    plt.colorbar()
+    ax = plt.subplot(1, 2, 2)
+    #plt.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy(), alpha=0.8)
+    im = ax.imshow(attention_map_np, cmap='inferno',
+               interpolation='nearest')
+    ax.axis('off')
+    ax.set_title('Attention Map')
+    cbar = fig.colorbar(im, ax=ax)
 
-    plt.show()
+    pth = f'imgs/{model_name}/attention/{sigma}/{idx}.pdf'
+    os.makedirs(f'imgs/{model_name}/attention/{sigma}/', exist_ok=True)
+    plt.savefig(pth) if SAVE_PLOT else plt.show()
 
 
-def visualize_feature_maps(feature_maps):
+
+def visualize_feature_maps(feature_maps, sigma, SAVE_PLOT, model_name, plot_num):
     for layer_idx, fmap in feature_maps.items():
         plt.figure(figsize=(15, 9))
         layer_fmaps = fmap[0]
@@ -326,5 +333,8 @@ def visualize_feature_maps(feature_maps):
             ax.imshow(layer_fmaps[idx].cpu().numpy(), cmap='viridis')
             ax.axis('off')
 
-        plt.suptitle(f"Feature Maps at Layer {layer_idx}")
-        plt.show()
+        plt.rcParams.update({'font.size': 15})
+        plt.suptitle(f"Feature Maps at Layer {layer_idx} ($\\sigma$: {sigma})")
+        os.makedirs(f'imgs/{model_name}/feature_maps/{sigma}/{plot_num}/', exist_ok=True)
+        pth = f'imgs/{model_name}/feature_maps/{sigma}/{plot_num}/{layer_idx}.pdf'
+        plt.savefig(pth) if SAVE_PLOT else plt.show()
