@@ -11,6 +11,8 @@ from claudeslens.utils.training import evaluate, add_noise, remove_noise, eval_a
 
 torch.manual_seed(SEED)
 
+import json
+
 """
 Everything calculated in this file is done batch-wise.
 """
@@ -208,12 +210,12 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
         pair_entaglement.append(matrix_with_correct_label)
 
         print("Weight Perturbation")
-        plot_entropy_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
+		plot_entropy_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
                               iters, SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
         barplot_ent_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
                              SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
 
-        print("Image Perturbation")
+        print("Image Perturbation")		
         plot_entropy_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
                               iters, SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
         barplot_ent_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
@@ -232,6 +234,19 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
 
     print("Pair Entanglement")
     print(pair_entaglement)
+	
+	ent_acc_cert_data = {
+		"ent_acc_cert_weights": ent_acc_cert_weights,
+		"ent_acc_cert_images": ent_acc_cert_images,
+		"weighted_average": weighted_average,
+		"matrix_with_correct_label": matrix_with_correct_label,
+		"test_loader.dataset.targets": test_loader.dataset.targets,
+		"sigma": sigma,
+		"iters": iters,
+		"model_name": model.__class__.__name__
+	}
+
+	json.dump(open("ent_acc_cert_data.json", "w"), indent=4)
 
     # For attention and feature maps:
 
