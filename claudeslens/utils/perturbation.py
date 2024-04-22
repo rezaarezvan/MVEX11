@@ -233,38 +233,43 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
 
     print("Pair Entanglement")
     print(pair_entaglement)
-    
+
     ent_acc_cert_data = {
         "ent_acc_cert_weights": ent_acc_cert_weights,
-	    "ent_acc_cert_images": ent_acc_cert_images,
-	    "weighted_average": weighted_average,
-	    "matrix_with_correct_label": matrix_with_correct_label,
-        #"test_loader.dataset.targets": test_loader.dataset.targets,
-	    "sigma": sigma,
-	    "iters": iters,
-	    "model_name": model.__class__.__name__
-	}
+        "ent_acc_cert_images": ent_acc_cert_images,
+        "weighted_average": weighted_average,
+        "matrix_with_correct_label": matrix_with_correct_label,
+        # "test_loader.dataset.targets": test_loader.dataset.targets,
+        "sigma": sigma,
+        "iters": iters,
+        "model_name": model.__class__.__name__
+    }
 
-    json.dump(ent_acc_cert_data,open("ent_acc_cert_data.json", "w"), indent=4)
+    path = f"{model.__class__.__name__}.json"
+    json.dump(ent_acc_cert_data, open(path, 'w'), indent=4)
 
     # For attention and feature maps:
 
-    if isinstance(model, ClaudesLens_ViT) or isinstance(model, Pretrained_ViT_B_16):
-        for sigma in sigmas:
-            eval_attention(model, test_loader, n=3, sigma=sigma, SAVE_PLOT=SAVE_PLOT)
-    
-            noise = add_noise_attention(model, sigma)
-    
-            eval_attention(model, test_loader, n=3, sigma=sigma, SAVE_PLOT=SAVE_PLOT)
-    
-            remove_noise_attention(model, noise)
-
-    if isinstance(model, ClaudesLens_ConvNext) or isinstance(model, Pretrained_ConvNext):
-        for sigma in sigmas:
-            eval_features(model, test_loader, n=3, sigma=sigma, SAVE_PLOT=SAVE_PLOT)
-    
-            noise = add_noise_conv_weights(model, sigma)
-    
-            eval_features(model, test_loader, n=3, sigma=sigma, SAVE_PLOT=SAVE_PLOT)
-    
-            remove_noise_conv_weights(model, noise)
+    # if isinstance(model, ClaudesLens_ViT) or isinstance(model, Pretrained_ViT_B_16):
+    #     for sigma in sigmas:
+    #         eval_attention(model, test_loader, n=3,
+    #                        sigma=sigma, SAVE_PLOT=SAVE_PLOT)
+    #
+    #         noise = add_noise_attention(model, sigma)
+    #
+    #         eval_attention(model, test_loader, n=3,
+    #                        sigma=sigma, SAVE_PLOT=SAVE_PLOT)
+    #
+    #         remove_noise_attention(model, noise)
+    #
+    # if isinstance(model, ClaudesLens_ConvNext) or isinstance(model, Pretrained_ConvNext):
+    #     for sigma in sigmas:
+    #         eval_features(model, test_loader, n=3,
+    #                       sigma=sigma, SAVE_PLOT=SAVE_PLOT)
+    #
+    #         noise = add_noise_conv_weights(model, sigma)
+    #
+    #         eval_features(model, test_loader, n=3,
+    #                       sigma=sigma, SAVE_PLOT=SAVE_PLOT)
+    #
+    #         remove_noise_conv_weights(model, noise)
