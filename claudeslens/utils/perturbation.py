@@ -182,22 +182,57 @@ def evaluate_image_perturbation(model, test_loader, sigma=0, iters=10):
 
 
 def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas=[0.1, 0.5, 1], entropy_window_size=0.1,
-                 SAVE_PLOT=True):
+                 SAVE_PLOT=True, LOAD_DATA=False):
     """
     Main evaluation loop for the perturbation tests for the model
     """
+
+    if LOAD_DATA:
+        print("Loading data from file")
+        f = open(f"{model.__class__.__name__}.json", 'r')
+        all_sigma_data = json.load(f)
+
+        for sigma, sigma_data in all_sigma_data["all_sigma_data"].items():
+            sigma = float(sigma)
+            plot_entropy_acc_cert(sigma_data["ent_acc_cert_weights"], test_loader.dataset.targets, sigma,
+                                  iters, SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
+            barplot_ent_acc_cert(sigma_data["ent_acc_cert_weights"], test_loader.dataset.targets, sigma,
+                                 SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
+
+            plot_entropy_acc_cert(sigma_data["ent_acc_cert_images"], test_loader.dataset.targets, sigma,
+                                  iters, SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
+            barplot_ent_acc_cert(sigma_data["ent_acc_cert_images"], test_loader.dataset.targets, sigma,
+                                 SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
+
+        plot_weight_avg(all_sigma_data["weighted_average"], SAVE_PLOT=SAVE_PLOT,
+                        model_name=model.__class__.__name__)
+
+        print("Pair Entanglement")
+        print(all_sigma_data["pair_entaglement"])
+
+        return
+
     weighted_average = []
     psi_list = []
     pair_entaglement = []
     og_acc = evaluate(model, test_loader)
     print(f"Original Accuracy: {og_acc}")
 
+    all_sigma_data = {}
+
     for sigma in sigmas:
+        sigma_data = {}
+
         pi = evaluate_robustness(model, test_loader, og_acc,
                                  sigma=sigma, iters=iters)
         print(f"σ: {sigma}, π: {pi}")
+
+        print("--------------------------------------------------")
+        print("Weight perturbation")
         ent_acc_cert_weights = evaluate_weight_perturbation(
             model, test_loader, sigma=sigma, iters=iters)
+        print("--------------------------------------------------")
+        print("Image perturbation")
         ent_acc_cert_images = evaluate_image_perturbation(
             model, test_loader, sigma=sigma, iters=iters)
         weighted_average.append(
@@ -208,22 +243,28 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
 
         pair_entaglement.append(matrix_with_correct_label)
 
-        print("Weight Perturbation")
+        sigma_data["pi"] = pi
+        sigma_data["ent_acc_cert_weights"] = ent_acc_cert_weights
+        sigma_data["ent_acc_cert_images"] = ent_acc_cert_images
+        sigma_data["weighted_average"] = weighted_average[-1]
+        sigma_data["matrix_with_correct_label"] = matrix_with_correct_label
+
         plot_entropy_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
                               iters, SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
         barplot_ent_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
                              SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
-
-        print("Image Perturbation")
         plot_entropy_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
                               iters, SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
         barplot_ent_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
                              SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
 
         for _lambda in lambdas:
-            print(
-                f"λ: {_lambda}, ψ: {psi(ent_acc_cert_weights, _lambda=_lambda)}")
-            psi_list.append(psi(ent_acc_cert_weights, _lambda=_lambda))
+            psi_value = psi(ent_acc_cert_weights, _lambda=_lambda)
+            print(f"λ: {_lambda}, ψ: {psi_value}")
+            psi_list.append(psi_value)
+            sigma_data[f"psi_lambda_{_lambda}"] = psi_value
+
+        all_sigma_data[sigma] = sigma_data
         print('-----------------------------------\n')
 
     best_psi, best_sigma = max_psi_sigma(psi_list, sigmas)
@@ -235,18 +276,15 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
     print(pair_entaglement)
 
     ent_acc_cert_data = {
-        "ent_acc_cert_weights": ent_acc_cert_weights,
-        "ent_acc_cert_images": ent_acc_cert_images,
+        "all_sigma_data": all_sigma_data,
         "weighted_average": weighted_average,
-        "matrix_with_correct_label": matrix_with_correct_label,
-        # "test_loader.dataset.targets": test_loader.dataset.targets,
-        "sigma": sigma,
-        "iters": iters,
+        "pair_entaglement": pair_entaglement,
         "model_name": model.__class__.__name__
     }
 
     path = f"{model.__class__.__name__}.json"
-    json.dump(ent_acc_cert_data, open(path, 'w'), indent=4)
+    with open(path, 'w') as json_file:
+        json.dump(ent_acc_cert_data, json_file, indent=4)
 
     # For attention and feature maps:
 

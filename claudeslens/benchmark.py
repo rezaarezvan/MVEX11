@@ -64,6 +64,8 @@ def parse_arguments():
                         help='Option to benchmark the models')
     parser.add_argument('-l', '--log', action='store_true',
                         help='Option to log the output to a file')
+    parser.add_argument('-ld', '--load_data', action='store_true',
+                        help='Load data for models')
 
     args = parser.parse_args()
     return args
@@ -137,7 +139,7 @@ def main():
             sigmas = [0.1, 0.5, 1, 10]
             lambdas = [0.1, 0.5, 1, 2]
             perturbation(model, test_loader, sigmas=sigmas,
-                         lambdas=lambdas, SAVE_PLOT=args.save_plots)
+                         lambdas=lambdas, SAVE_PLOT=args.save_plots, LOAD_DATA=args.load_data)
 
         log_file.close()
 
