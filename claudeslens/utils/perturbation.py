@@ -1,3 +1,4 @@
+import os
 import json
 import torch
 import torch.nn as nn
@@ -189,7 +190,7 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
 
     if LOAD_DATA:
         print("Loading data from file")
-        f = open(f"{model.__class__.__name__}.json", 'r')
+        f = open(f"results/{model.__class__.__name__}.json", 'r')
         all_sigma_data = json.load(f)
 
         for sigma, sigma_data in all_sigma_data["all_sigma_data"].items():
@@ -282,7 +283,8 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
         "model_name": model.__class__.__name__
     }
 
-    path = f"{model.__class__.__name__}.json"
+    os.makedirs('results', exist_ok=True)
+    path = f"results/{model.__class__.__name__}.json"
     with open(path, 'w') as json_file:
         json.dump(ent_acc_cert_data, json_file, indent=4)
 
