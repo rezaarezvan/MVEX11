@@ -285,8 +285,18 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
 
     os.makedirs('results', exist_ok=True)
     path = f"results/{model.__class__.__name__}.json"
-    with open(path, 'w') as json_file:
-        json.dump(ent_acc_cert_data, json_file, indent=4)
+
+    if os.path.exists(path):
+        with open(path, 'r') as json_file:
+            data = json.load(json_file)
+
+        data["all_sigma_data"].update(all_sigma_data)
+
+        with open(path, 'w') as json_file:
+            json.dump(data, json_file, indent=4)
+    else:
+        with open(path, 'w') as json_file:
+            json.dump(ent_acc_cert_data, json_file, indent=4)
 
     # For attention and feature maps:
 
