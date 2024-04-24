@@ -109,22 +109,22 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
 
     plt.rcParams.update({'font.size': 15})
     fig = plt.figure(figsize=(15, 9))
-    fig.suptitle(
-        f'Entropy, Accuracy, and Certainty ($\\sigma$: {sigma:.3f}, Iterations: {iterations})')
+    # fig.suptitle(
+    #     f'Entropy, Accuracy, and Certainty ($\\sigma$: {sigma:.3f}, Iterations: {iterations})')
 
-    ax = fig.add_subplot(1, 2, 1)
-    ax.scatter(accuracy, entropy, c=labels, cmap=custom_cmap)
-    ax.set_xlabel('Accuracy')
-    ax.set_ylabel('Entropy')
-    plot_bounds(classes=unique_labels)
+    # ax = fig.add_subplot(1, 2, 1)
+    # ax.scatter(accuracy, entropy, c=labels, cmap=custom_cmap)
+    # ax.set_xlabel('Accuracy')
+    # ax.set_ylabel('Entropy')
+    # plot_bounds(classes=unique_labels)
 
-    ax = fig.add_subplot(1, 2, 2, projection='3d')
-    im = ax.scatter3D(accuracy, entropy, certainty, c=labels, cmap=custom_cmap)
+    ax = fig.add_subplot(111, projection='3d')
+    im = ax.scatter(accuracy, entropy, certainty, c=labels, cmap=custom_cmap)
     ax.set_xlabel('Accuracy')
     ax.set_ylabel('Entropy')
     ax.set_zlabel('Certainty')
 
-    cbar = fig.colorbar(im, ax=ax)
+    cbar = fig.colorbar(im, ax=ax, pad=0.01)
     cbar.set_label('Class index')
     cbar.set_ticks(range(unique_labels))
     cbar.set_ticklabels(range(unique_labels))
@@ -134,7 +134,9 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     ax.view_init(elev=25, azim=210)
 
     path = f'imgs/{model_name}/EAC/{type}/eac_{sigma:.3f}.pdf'
-    plt.savefig(path) if SAVE_PLOT else plt.show()
+    ax.set_box_aspect([1, 1, 1])
+    plt.tight_layout()
+    plt.savefig(path, bbox_inches='tight') if SAVE_PLOT else plt.show()
 
 
 def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False, type='weight', model_name=None):
@@ -297,7 +299,7 @@ def visualize_attention_map(image, attention_map, sigma, SAVE_PLOT, model_name, 
     attention_map_np = attention_map_resized.detach().cpu().numpy()
 
     plt.rcParams.update({'font.size': 15})
-    fig = plt.figure(figsize=(15,9))
+    fig = plt.figure(figsize=(15, 9))
     fig.suptitle(f'$\\sigma$: {sigma}')
     ax = plt.subplot(1, 2, 1)
     im = ax.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy())
@@ -306,9 +308,9 @@ def visualize_attention_map(image, attention_map, sigma, SAVE_PLOT, model_name, 
     cbar = fig.colorbar(im, ax=ax)
 
     ax = plt.subplot(1, 2, 2)
-    #plt.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy(), alpha=0.8)
+    # plt.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy(), alpha=0.8)
     im = ax.imshow(attention_map_np, cmap='inferno',
-               interpolation='nearest')
+                   interpolation='nearest')
     ax.axis('off')
     ax.set_title('Attention Map')
     cbar = fig.colorbar(im, ax=ax)
@@ -316,7 +318,6 @@ def visualize_attention_map(image, attention_map, sigma, SAVE_PLOT, model_name, 
     pth = f'imgs/{model_name}/attention/{sigma}/{idx}.pdf'
     os.makedirs(f'imgs/{model_name}/attention/{sigma}/', exist_ok=True)
     plt.savefig(pth) if SAVE_PLOT else plt.show()
-
 
 
 def visualize_feature_maps(feature_maps, sigma, SAVE_PLOT, model_name, plot_num):
@@ -335,6 +336,7 @@ def visualize_feature_maps(feature_maps, sigma, SAVE_PLOT, model_name, plot_num)
 
         plt.rcParams.update({'font.size': 15})
         plt.suptitle(f"Feature Maps at Layer {layer_idx} ($\\sigma$: {sigma})")
-        os.makedirs(f'imgs/{model_name}/feature_maps/{sigma}/{plot_num}/', exist_ok=True)
+        os.makedirs(
+            f'imgs/{model_name}/feature_maps/{sigma}/{plot_num}/', exist_ok=True)
         pth = f'imgs/{model_name}/feature_maps/{sigma}/{plot_num}/{layer_idx}.pdf'
         plt.savefig(pth) if SAVE_PLOT else plt.show()
