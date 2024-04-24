@@ -214,7 +214,7 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
         return
 
     weighted_average = []
-    psi_list = []
+    list_of_psi_list = []
     pair_entaglement = []
     og_acc = evaluate(model, test_loader)
     print(f"Original Accuracy: {og_acc}")
@@ -223,6 +223,7 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
 
     for sigma in sigmas:
         sigma_data = {}
+        psi_list   = []
 
         pi = evaluate_robustness(model, test_loader, og_acc,
                                  sigma=sigma, iters=iters)
@@ -266,9 +267,10 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
             sigma_data[f"psi_lambda_{_lambda}"] = psi_value
 
         all_sigma_data[sigma] = sigma_data
+        list_of_psi_list.append(psi_list)
         print('-----------------------------------\n')
 
-    best_psi, best_sigma = max_psi_sigma(psi_list, sigmas)
+    best_psi, best_sigma = max_psi_sigma(list_of_psi_list, sigmas)
     print(f"Max: (ψ: {best_psi}, σ: {best_sigma})")
     plot_weight_avg(weighted_average, SAVE_PLOT=SAVE_PLOT,
                     model_name=model.__class__.__name__)

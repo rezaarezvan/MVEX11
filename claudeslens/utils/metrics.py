@@ -70,14 +70,13 @@ def weight_avg(data, window_size=0.25):
     return result
 
 
-def max_psi_sigma(psi_list, sigma_list):
+def max_psi_sigma(psi_lists, sigma_list):
     """
     Returns max (psi, sigma) based on psi value
-    :param psi_list: A list of psi values
+    :param psi_lists: A list of lists of psi values
     :param sigma_list: A list of sigma values
     """
-    max_psi_index = np.argmax(psi_list)
-    return psi_list[max_psi_index], sigma_list[max_psi_index % len(sigma_list)]
+    return max(zip(psi_lists, sigma_list), key=lambda x: x[0])
 
 
 def pi(alpha, alpha_sigma):
