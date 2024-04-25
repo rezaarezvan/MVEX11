@@ -230,13 +230,13 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
 
             is_confident = model_is_confident(
                 sigma_data["ent_acc_cert_weights"])
-            print(f"For σ: {sigma}, model is confident: {
-                  is_confident} for weight perturbation")
+            print(
+                f"For σ: {sigma}, model is confident: {is_confident} for weight perturbation")
 
             is_confident = model_is_confident(
                 sigma_data["ent_acc_cert_images"])
-            print(f"For σ: {sigma}, model is confident: {
-                  is_confident} for image perturbation")
+            print(
+                f"For σ: {sigma}, model is confident: {is_confident} for image perturbation")
 
         plot_weight_avg(all_sigma_data["weighted_average"], SAVE_PLOT=SAVE_PLOT,
                         model_name=model.__class__.__name__)
@@ -294,11 +294,11 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
                              SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
 
         is_confident = model_is_confident(ent_acc_cert_weights)
-        print(f"For σ: {sigma}, model is confident: {
-              is_confident} for weight perturbation")
+        print(
+            f"For σ: {sigma}, model is confident: {is_confident} for weight perturbation")
         is_confident = model_is_confident(ent_acc_cert_images)
-        print(f"For σ: {sigma}, model is confident: {
-              is_confident} for image perturbation")
+        print(
+            f"For σ: {sigma}, model is confident: {is_confident} for image perturbation")
 
         for _lambda in lambdas:
             psi_value = psi(ent_acc_cert_weights, _lambda=_lambda)
