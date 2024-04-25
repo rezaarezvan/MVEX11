@@ -136,7 +136,7 @@ def main():
         if args.save_weights:
             save_model(model, pth)
         if args.benchmark:
-            sigmas = [0.1, 0.5, 1, 10]
+            sigmas = [0, 0.1, 0.5, 1, 10]
             lambdas = [0.1, 0.5, 1, 2]
             perturbation(model, test_loader, sigmas=sigmas,
                          lambdas=lambdas, SAVE_PLOT=args.save_plots, LOAD_DATA=args.load_data)
