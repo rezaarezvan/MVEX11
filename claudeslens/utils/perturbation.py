@@ -197,7 +197,7 @@ def model_is_confident(data, cutoff_acc=0.10):
     n = len(acc)
     m = np.mean(acc)
     std_err = np.std(acc) / np.sqrt(n)
-    z = 1.96
+    z = 1.65  # 90% confidence interval
 
     ci_low = m - z * std_err
     is_confident = ci_low > cutoff_acc
@@ -218,19 +218,25 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
 
         for sigma, sigma_data in all_sigma_data["all_sigma_data"].items():
             sigma = float(sigma)
-            # plot_entropy_acc_cert(sigma_data["ent_acc_cert_weights"], test_loader.dataset.targets, sigma,
-            #                       iters, SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
-            # barplot_ent_acc_cert(sigma_data["ent_acc_cert_weights"], test_loader.dataset.targets, sigma,
-            #                      SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
-            #
-            # plot_entropy_acc_cert(sigma_data["ent_acc_cert_images"], test_loader.dataset.targets, sigma,
-            #                       iters, SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
-            # barplot_ent_acc_cert(sigma_data["ent_acc_cert_images"], test_loader.dataset.targets, sigma,
-            #                      SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
+            plot_entropy_acc_cert(sigma_data["ent_acc_cert_weights"], test_loader.dataset.targets, sigma,
+                                  iters, SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
+            barplot_ent_acc_cert(sigma_data["ent_acc_cert_weights"], test_loader.dataset.targets, sigma,
+                                 SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
+
+            plot_entropy_acc_cert(sigma_data["ent_acc_cert_images"], test_loader.dataset.targets, sigma,
+                                  iters, SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
+            barplot_ent_acc_cert(sigma_data["ent_acc_cert_images"], test_loader.dataset.targets, sigma,
+                                 SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
 
             is_confident = model_is_confident(
                 sigma_data["ent_acc_cert_weights"])
-            print(f"For σ: {sigma}, model is confident: {is_confident}")
+            print(f"For σ: {sigma}, model is confident: {
+                  is_confident} for weight perturbation")
+
+            is_confident = model_is_confident(
+                sigma_data["ent_acc_cert_images"])
+            print(f"For σ: {sigma}, model is confident: {
+                  is_confident} for image perturbation")
 
         plot_weight_avg(all_sigma_data["weighted_average"], SAVE_PLOT=SAVE_PLOT,
                         model_name=model.__class__.__name__)
@@ -286,6 +292,13 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
                               iters, SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
         barplot_ent_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
                              SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
+
+        is_confident = model_is_confident(ent_acc_cert_weights)
+        print(f"For σ: {sigma}, model is confident: {
+              is_confident} for weight perturbation")
+        is_confident = model_is_confident(ent_acc_cert_images)
+        print(f"For σ: {sigma}, model is confident: {
+              is_confident} for image perturbation")
 
         for _lambda in lambdas:
             psi_value = psi(ent_acc_cert_weights, _lambda=_lambda)
