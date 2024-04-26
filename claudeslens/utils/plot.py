@@ -302,18 +302,14 @@ def visualize_attention_map(image, attention_map, sigma, SAVE_PLOT, model_name, 
     fig = plt.figure(figsize=(15, 9))
     fig.suptitle(f'$\\sigma$: {sigma}')
     ax = plt.subplot(1, 2, 1)
-    im = ax.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy())
+    ax.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy())
     ax.axis('off')
     ax.set_title('Original Image')
-    cbar = fig.colorbar(im, ax=ax)
 
     ax = plt.subplot(1, 2, 2)
-    # plt.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy(), alpha=0.8)
-    im = ax.imshow(attention_map_np, cmap='inferno',
-                   interpolation='nearest')
+    ax.imshow(attention_map_np, cmap='gray', interpolation='nearest')
     ax.axis('off')
     ax.set_title('Attention Map')
-    cbar = fig.colorbar(im, ax=ax)
 
     pth = f'imgs/{model_name}/attention/{sigma}/{idx}.pdf'
     os.makedirs(f'imgs/{model_name}/attention/{sigma}/', exist_ok=True)
