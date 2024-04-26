@@ -344,24 +344,14 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
 
     # if isinstance(model, ClaudesLens_ViT) or isinstance(model, Pretrained_ViT_B_16):
     #     for sigma in sigmas:
-    #         eval_attention(model, test_loader, n=3,
-    #                        sigma=sigma, SAVE_PLOT=SAVE_PLOT)
-    #
     #         noise = add_noise_attention(model, sigma)
-    #
     #         eval_attention(model, test_loader, n=3,
     #                        sigma=sigma, SAVE_PLOT=SAVE_PLOT)
-    #
     #         remove_noise_attention(model, noise)
-    #
+
     # if isinstance(model, ClaudesLens_ConvNext) or isinstance(model, Pretrained_ConvNext):
     #     for sigma in sigmas:
-    #         eval_features(model, test_loader, n=3,
-    #                       sigma=sigma, SAVE_PLOT=SAVE_PLOT)
-    #
     #         noise = add_noise_conv_weights(model, sigma)
-    #
     #         eval_features(model, test_loader, n=3,
     #                       sigma=sigma, SAVE_PLOT=SAVE_PLOT)
-    #
     #         remove_noise_conv_weights(model, noise)
