@@ -183,11 +183,11 @@ def evaluate_image_perturbation(model, test_loader, sigma=0, iters=10):
     return result
 
 
-def model_is_confident(data, cutoff_acc=0.10):
+def model_is_uncertain(data, cutoff_acc=0.10):
     '''
-    Returns True if the model is confident, False otherwise.
+    Returns True if the model is uncertain, False otherwise.
 
-    A model is said to be confident if a specified confidence interval (default 95%) of the data is above a certain accuracy threshold (default 25%).
+    A model is said to be uncertain if a specified confidence interval (default 95%) of the data is below a certain accuracy threshold (default 25%).
 
     Data is of form EAC_data = [(entropy, accuracy, certainty), ...]
     '''
@@ -200,9 +200,9 @@ def model_is_confident(data, cutoff_acc=0.10):
     z = 1.65  # 90% confidence interval
 
     ci_low = m - z * std_err
-    is_confident = ci_low > cutoff_acc
+    is_uncertain = ci_low < cutoff_acc
 
-    return is_confident
+    return is_uncertain
 
 
 def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas=[0.1, 0.5, 1], entropy_window_size=0.1,
@@ -228,15 +228,15 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
             barplot_ent_acc_cert(sigma_data["ent_acc_cert_images"], test_loader.dataset.targets, sigma,
                                  SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
 
-            is_confident = model_is_confident(
+            is_uncertain = model_is_uncertain(
                 sigma_data["ent_acc_cert_weights"])
             print(
-                f"For σ: {sigma}, model is confident: {is_confident} for weight perturbation")
+                f"For σ: {sigma}, model is uncertain: {is_uncertain} for weight perturbation")
 
-            is_confident = model_is_confident(
+            is_uncertain = model_is_uncertain(
                 sigma_data["ent_acc_cert_images"])
             print(
-                f"For σ: {sigma}, model is confident: {is_confident} for image perturbation")
+                f"For σ: {sigma}, model is uncertain: {is_uncertain} for image perturbation")
 
         plot_weight_avg(all_sigma_data["weighted_average"], SAVE_PLOT=SAVE_PLOT,
                         model_name=model.__class__.__name__)
@@ -293,12 +293,12 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
         barplot_ent_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
                              SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
 
-        is_confident = model_is_confident(ent_acc_cert_weights)
+        is_uncertain = model_is_uncertain(ent_acc_cert_weights)
         print(
-            f"For σ: {sigma}, model is confident: {is_confident} for weight perturbation")
-        is_confident = model_is_confident(ent_acc_cert_images)
+            f"For σ: {sigma}, model is uncertain: {is_uncertain} for weight perturbation")
+        is_uncertain = model_is_uncertain(ent_acc_cert_images)
         print(
-            f"For σ: {sigma}, model is confident: {is_confident} for image perturbation")
+            f"For σ: {sigma}, model is uncertain: {is_uncertain} for image perturbation")
 
         for _lambda in lambdas:
             psi_value = psi(ent_acc_cert_weights, _lambda=_lambda)
