@@ -32,6 +32,7 @@ def add_noise_attention(model, sigma):
     """
     Add noise to the model attention weights
     """
+    model.eval().to(DEVICE)
     noise_data = []
     for module in model.modules():
         if isinstance(module, CustomEncoderBlock):
@@ -48,6 +49,7 @@ def remove_noise_attention(model, noise_data):
     """
     Remove noise from the model attention weights
     """
+    model.eval().to(DEVICE)
     noise_iter = iter(noise_data)
     for module in model.modules():
         if isinstance(module, CustomEncoderBlock):
@@ -177,13 +179,14 @@ def evaluate(model, test_loader, writer=None, global_step=None):
     return avg_accuracy
 
 
-def eval_attention(model, test_loader, n=3,sigma=0, SAVE_PLOT=False):
+def eval_attention(model, test_loader, n=3, sigma=0, SAVE_PLOT=False):
     model.eval().to(DEVICE)
     images = next(iter(test_loader))[0].to(DEVICE)
     for idx, image in enumerate(images[:n]):
         image = image.unsqueeze(0)
         _, attention_map = model(image, need_weights=True)
-        visualize_attention_map(image, attention_map, sigma, SAVE_PLOT, model.__class__.__name__, idx)
+        visualize_attention_map(
+            image, attention_map, sigma, SAVE_PLOT, model.__class__.__name__, idx)
 
 
 def eval_features(model, test_loader, n=3, sigma=0, SAVE_PLOT=False):
@@ -192,4 +195,5 @@ def eval_features(model, test_loader, n=3, sigma=0, SAVE_PLOT=False):
     for idx, image in enumerate(images[:n]):
         image = image.unsqueeze(0)
         model(image, return_features=True)
-        visualize_feature_maps(model.feature_maps, sigma, SAVE_PLOT, model.__class__.__name__, idx)
+        visualize_feature_maps(model.feature_maps, sigma,
+                               SAVE_PLOT, model.__class__.__name__, idx)

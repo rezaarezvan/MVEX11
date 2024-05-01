@@ -133,10 +133,11 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     os.makedirs(f'imgs/{model_name}/EAC/{type}/', exist_ok=True)
     ax.view_init(elev=25, azim=210)
 
-    path = f'imgs/{model_name}/EAC/{type}/eac_{sigma:.3f}.pdf'
+    path = f'imgs/{model_name}/EAC/{type}/eac_{sigma:.3f}.png'
     ax.set_box_aspect([1, 1, 1])
     plt.tight_layout()
-    plt.savefig(path, bbox_inches='tight') if SAVE_PLOT else plt.show()
+    plt.savefig(path, bbox_inches='tight',
+                dpi=300) if SAVE_PLOT else plt.show()
 
 
 def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False, type='weight', model_name=None):
@@ -167,8 +168,10 @@ def barplot_ent_acc_cert(ent_acc_cert, labels, sigma, SAVE_PLOT=False, type='wei
     plt.legend(['Accuracy', 'Certainty', 'Entropy'])
     os.makedirs(f'imgs/{model_name}/bar_plots/{type}', exist_ok=True)
 
-    path = f'imgs/{model_name}/bar_plots/{type}/bar_{sigma:.3f}.pdf'
-    plt.savefig(path) if SAVE_PLOT else plt.show()
+    path = f'imgs/{model_name}/bar_plots/{type}/bar_{sigma:.3f}.png'
+    plt.tight_layout()
+    plt.savefig(path, bbox_inches='tight',
+                dpi=300) if SAVE_PLOT else plt.show()
 
 
 def plot_entropy_acc_cert_gif(ent_acc_cert, sigma, iterations, angle_increment=5, elev_increment=1, SAVE_GIF=True,
@@ -275,8 +278,10 @@ def plot_weight_avg(data, SAVE_PLOT=False, model_name=None):
 
     plt.legend()
     os.makedirs(f'imgs/{model_name}/weighted_avg', exist_ok=True)
-    plt.savefig(
-        f'imgs/{model_name}/weighted_avg/curve.pdf') if SAVE_PLOT else plt.show()
+    path = f'imgs/{model_name}/weighted_avg/curve.png'
+    plt.tight_layout()
+    plt.savefig(path, bbox_inches='tight',
+                dpi=300) if SAVE_PLOT else plt.show()
 
 
 def visualize_attention_map(image, attention_map, sigma, SAVE_PLOT, model_name, idx):
@@ -300,7 +305,6 @@ def visualize_attention_map(image, attention_map, sigma, SAVE_PLOT, model_name, 
 
     plt.rcParams.update({'font.size': 15})
     fig = plt.figure(figsize=(15, 9))
-    fig.suptitle(f'$\\sigma$: {sigma}')
     ax = plt.subplot(1, 2, 1)
     ax.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy())
     ax.axis('off')
@@ -311,9 +315,10 @@ def visualize_attention_map(image, attention_map, sigma, SAVE_PLOT, model_name, 
     ax.axis('off')
     ax.set_title('Attention Map')
 
-    pth = f'imgs/{model_name}/attention/{sigma}/{idx}.pdf'
+    pth = f'imgs/{model_name}/attention/{sigma}/{idx}.png'
     os.makedirs(f'imgs/{model_name}/attention/{sigma}/', exist_ok=True)
-    plt.savefig(pth) if SAVE_PLOT else plt.show()
+    plt.tight_layout()
+    plt.savefig(pth, bbox_inches='tight', dpi=300) if SAVE_PLOT else plt.show()
 
 
 def visualize_feature_maps(feature_maps, sigma, SAVE_PLOT, model_name, plot_num):
@@ -334,5 +339,7 @@ def visualize_feature_maps(feature_maps, sigma, SAVE_PLOT, model_name, plot_num)
         plt.suptitle(f"Feature Maps at Layer {layer_idx} ($\\sigma$: {sigma})")
         os.makedirs(
             f'imgs/{model_name}/feature_maps/{sigma}/{plot_num}/', exist_ok=True)
-        pth = f'imgs/{model_name}/feature_maps/{sigma}/{plot_num}/{layer_idx}.pdf'
-        plt.savefig(pth) if SAVE_PLOT else plt.show()
+        pth = f'imgs/{model_name}/feature_maps/{sigma}/{plot_num}/{layer_idx}.png'
+        plt.tight_layout()
+        plt.savefig(pth, bbox_inches='tight',
+                    dpi=300) if SAVE_PLOT else plt.show()
