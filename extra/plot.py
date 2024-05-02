@@ -1,5 +1,8 @@
 import numpy as np
+import scipy.special
 import matplotlib.pyplot as plt
+
+plt.rcParams.update({'font.size': 20})
 
 activation_functions = {
     'sigmoid': {
@@ -7,40 +10,32 @@ activation_functions = {
         'title': 'Sigmoid Activation Function',
         'label': '$\\sigma(z) = \\frac{1}{1+e^{-z}}$'
     },
-    'tanh': {
-        'func': np.tanh,
-        'title': 'Hyperbolic Tangent Activation Function',
-        'label': '$\\tanh(z) = \\frac{e^z + e^{-z}}{e^z - e^{-z}}$'
-    },
     'relu': {
         'func': lambda z: np.maximum(0, z),
         'title': 'Rectified Linear Unit Activation Function (ReLU)',
         'label': '$ReLU(z) = max(0, z)$'
     },
-    'gaussian': {
-        'func': lambda z: np.exp(-z**2),
-        'title': 'Gaussian Activation Function',
-        'label': '$f(z) = \\exp(-z^2)$'
-    }
+    'gelu': {
+        'func': lambda x: 0.5 * x * (1 + scipy.special.erf(x / np.sqrt(2))),
+        'title': 'Gaussian Error Linear Unit Activation Function (GELU)',
+        'label': r'$\text{GELU}(z) = \frac{1}{2}\left(1 + \text{erf}\left(\frac{z}{\sqrt{2}}\right)\right)$'}
 }
 
 
 def plot_activation_functions():
-    z = np.linspace(-10, 10, 1000)
-    plt.figure(figsize=(10, 8))
-
+    z = np.linspace(-3, 3, 1000)
+    plt.figure(figsize=(15, 9))
     for i, (_, value) in enumerate(activation_functions.items(), 1):
         y = value['func'](z)
-        plt.subplot(2, 2, i)
-        plt.plot(z, y, label=value['label'])
-        plt.title(value['title'])
+        plt.plot(z, y, label=value['label'], linewidth=5)
         plt.xlabel('$z$')
         plt.ylabel('$y$')
-        plt.grid(True)
-        plt.legend(handlelength=0, handletextpad=0, loc='upper left')
 
+    plt.legend()
+    plt.grid(True)
+    plt.title('Activation Functions')
     plt.tight_layout()
-    plt.savefig('activation_functions.pdf')
+    plt.savefig('activation_functions.pdf', bbox_inches='tight')
     plt.show()
 
 
