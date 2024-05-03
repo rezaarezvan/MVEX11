@@ -179,6 +179,33 @@ def evaluate(model, test_loader, writer=None, global_step=None):
     return avg_accuracy
 
 
+@torch.no_grad()
+def evaluate_img_noise(model, test_loader, writer=None, global_step=None, sigma=0.1):
+    """
+    Evaluate given model on the test set with gaussian noise added to the input images
+    """
+    model.eval().to(DEVICE)
+    loop = tqdm(test_loader, leave=False)
+    accuracies = []
+
+    for images, labels in loop:
+        images, labels = images.to(DEVICE), labels.to(DEVICE)
+        noise = torch.randn_like(images) * sigma
+        noisy_images = images + noise
+        noisy_images = torch.clamp(noisy_images, 0, 1)
+        outputs = model(noisy_images)
+        preds = outputs.argmax(dim=1)
+        accuracy = (preds == labels).float().mean()
+        accuracies.append(accuracy.item())
+
+    avg_accuracy = np.mean(accuracies)
+    if writer and global_step is not None:
+        writer.add_scalar('Accuracy/test', avg_accuracy, global_step)
+
+    print(f"Validation Accuracy: {avg_accuracy:.4f}")
+    return avg_accuracy
+
+
 def eval_attention(model, test_loader, n=3, sigma=0, SAVE_PLOT=False):
     model.eval().to(DEVICE)
     images = next(iter(test_loader))[0].to(DEVICE)
