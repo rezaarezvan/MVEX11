@@ -94,7 +94,7 @@ def plot_pair_entanglement(predictions_and_correct_label, threshold: float):
     plt.show()
 
 
-def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=False, type='weight', model_name=None):
+def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, weighted_avg, SAVE_PLOT=False, type='weight', model_name=None):
     """
     Plots the entropy, accuracy and certainty in a 3D plot and 2D plot next to each other.
     """
@@ -130,6 +130,13 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, SAVE_PLOT=Fal
     cbar.set_ticklabels(range(unique_labels))
 
     plot_bounds(classes=unique_labels)
+    
+    entropy, probability = zip(*weighted_avg)
+    deviation = np.std(probability)
+    plt.plot(entropy, probability, marker='o')
+    plt.fill_between(entropy, [x-deviation for x in probability], 
+                    [x+deviation for x in probability], alpha=0.2)
+
     os.makedirs(f'imgs/{model_name}/EAC/{type}/', exist_ok=True)
     ax.view_init(elev=25, azim=210)
 
