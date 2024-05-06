@@ -337,12 +337,10 @@ def visualize_attention_map(image, attention_map, sigma, SAVE_PLOT, model_name, 
     ax = plt.subplot(1, 2, 1)
     ax.imshow(image[0].permute(1, 2, 0).detach().cpu().numpy())
     ax.axis('off')
-    ax.set_title('Original Image')
 
     ax = plt.subplot(1, 2, 2)
-    ax.imshow(attention_map_np, cmap='gray', interpolation='nearest')
+    ax.imshow(attention_map_np, interpolation='nearest')
     ax.axis('off')
-    ax.set_title('Attention Map')
 
     pth = f'imgs/{model_name}/attention/{sigma}/{idx}.png'
     os.makedirs(f'imgs/{model_name}/attention/{sigma}/', exist_ok=True)
