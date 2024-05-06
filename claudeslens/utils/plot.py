@@ -109,33 +109,27 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, weighted_avg,
 
     plt.rcParams.update({'font.size': 15})
     fig = plt.figure(figsize=(15, 9))
-    # fig.suptitle(
-    #     f'Entropy, Accuracy, and Certainty ($\\sigma$: {sigma:.3f}, Iterations: {iterations})')
-
-    # ax = fig.add_subplot(1, 2, 1)
-    # ax.scatter(accuracy, entropy, c=labels, cmap=custom_cmap)
-    # ax.set_xlabel('Accuracy')
-    # ax.set_ylabel('Entropy')
-    # plot_bounds(classes=unique_labels)
 
     ax = fig.add_subplot(111, projection='3d')
     im = ax.scatter(accuracy, entropy, certainty, c=labels, cmap=custom_cmap)
     ax.set_xlabel('Accuracy')
     ax.set_ylabel('Entropy')
     ax.set_zlabel('Certainty')
+    ax.set_zlim(0, 1)
 
     cbar = fig.colorbar(im, ax=ax, pad=0.01)
     cbar.set_label('Class index')
     cbar.set_ticks(range(unique_labels))
     cbar.set_ticklabels(range(unique_labels))
 
+    entropy, probability = zip(*weighted_avg[0])
+    reg_line = np.polyfit(probability, entropy, 1)
+    ax.scatter(probability, entropy, 0, marker='X', c='k', s=100, alpha=1)
+    p1 = [0, reg_line[1]]
+    p2 = [1/reg_line[0] * -reg_line[1], 0]
+    ax.plot([p1[0], p2[0]], [p1[1], p2[1]], [0, 0], c='k', linestyle='dashed')
+
     plot_bounds(classes=unique_labels)
-    
-    entropy, probability = zip(*weighted_avg)
-    deviation = np.std(probability)
-    plt.plot(entropy, probability, marker='o')
-    plt.fill_between(entropy, [x-deviation for x in probability], 
-                    [x+deviation for x in probability], alpha=0.2)
 
     os.makedirs(f'imgs/{model_name}/EAC/{type}/', exist_ok=True)
     ax.view_init(elev=25, azim=210)
@@ -257,6 +251,34 @@ def plot_bounds(classes):
 
     # This plots the vertical line
     plt.plot([0, 0], [0, y2[0]], color="orange")
+
+
+def plot_bounds_3d(classes, ax):
+    """
+    This call plots the domain of the amount of given classes.
+    (Beware there exists off-by-one, this is handled in the function)
+    """
+    classes -= 1
+    # Arc-function at bottom
+    x = np.linspace(0.0001, 0.9999, 10000)
+    y = -x * np.log(x) - (1 - x) * np.log(1 - x)
+    ax.plot(x, y, zs=0, color='orange', linestyle='dashed')
+    x = np.linspace(0.0001, 0.9999, 10000)
+    y = -x * np.log(x) - (1 - x) * np.log(1 - x)
+
+    # Higher top function
+    y2 = []
+    for p in x:
+        a = -p * np.log(p)
+        for _ in range(classes):
+            a -= (1 - p) / (classes) * np.log((1 - p) / classes)
+        y2.append(a)
+
+    ax.plot(x, y, zs=1, color="orange")
+    ax.plot(x, y2, zs=1, color="orange")
+
+    # This plots the vertical line
+    ax.plot([0, 0], [0, y2[0]], zs=[1, 1], color="orange")
 
 
 def plot_weight_avg(data, SAVE_PLOT=False, model_name=None):
