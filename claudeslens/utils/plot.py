@@ -115,12 +115,12 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, weighted_avg,
     ax.set_xlabel('Accuracy')
     ax.set_ylabel('Entropy')
     ax.set_zlabel('Certainty')
-    ax.set_zlim(0, 1)
 
     cbar = fig.colorbar(im, ax=ax, pad=0.01)
     cbar.set_label('Class index')
     cbar.set_ticks(range(unique_labels))
     cbar.set_ticklabels(range(unique_labels))
+    
 
     entropy, probability = zip(*weighted_avg[0])
     reg_line = np.polyfit(probability, entropy, 1)
@@ -129,7 +129,11 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, weighted_avg,
     p2 = [1/reg_line[0] * -reg_line[1], 0]
     ax.plot([p1[0], p2[0]], [p1[1], p2[1]], [0, 0], c='k', linestyle='dashed')
 
-    plot_bounds(classes=unique_labels)
+    y = plot_bounds(classes=unique_labels)
+
+    ax.set_zlim(0, 1.1)
+    ax.set_xlim(0, 1.1)
+    ax.set_ylim(0, y)
 
     os.makedirs(f'imgs/{model_name}/EAC/{type}/', exist_ok=True)
     ax.view_init(elev=25, azim=210)
@@ -251,6 +255,8 @@ def plot_bounds(classes):
 
     # This plots the vertical line
     plt.plot([0, 0], [0, y2[0]], color="orange")
+
+    return max(y2)
 
 
 def plot_bounds_3d(classes, ax):
