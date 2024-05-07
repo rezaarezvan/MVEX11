@@ -8,6 +8,26 @@ from tqdm.auto import tqdm
 from collections import defaultdict
 from matplotlib.colors import LinearSegmentedColormap
 
+def plot_pic_comparison(test_loader, sigma, eac_data, positional_data):
+    min_img = test_loader.dataset.data[positional_data[0]]
+    #print(test_loader.dataset.data[positional_data[0]])
+    max_img = test_loader.dataset.data[positional_data[1]]
+    images = [min_img, max_img]
+
+    plt.rcParams.update({'font.size': 15})
+    fig = plt.figure(figsize=(15, 9))
+    fig.suptitle(f'Input images on perturbation: {sigma}')
+    ax = plt.subplot(1, 2, 1)
+    ax.imshow(images[0], cmap='Greys_r')
+    ax.title.set_text(f'Evaluated entropy: {eac_data[positional_data[0]][0]}')
+    ax.set_axis_off()
+
+    ax = plt.subplot(1, 2, 2)
+    ax.imshow(images[1], cmap='Greys_r')
+    ax.title.set_text(f'Evaluated entropy: {eac_data[positional_data[1]][0]}')
+    ax.set_axis_off()
+    plt.show()
+
 
 def plot_pair_entanglement(predictions_and_correct_label, threshold: float):
     """
