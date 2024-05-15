@@ -8,9 +8,10 @@ from tqdm.auto import tqdm
 from collections import defaultdict
 from matplotlib.colors import LinearSegmentedColormap
 
+
 def plot_pic_comparison(test_loader, sigma, eac_data, positional_data):
     min_img = test_loader.dataset.data[positional_data[0]]
-    #print(test_loader.dataset.data[positional_data[0]])
+    # print(test_loader.dataset.data[positional_data[0]])
     max_img = test_loader.dataset.data[positional_data[1]]
     images = [min_img, max_img]
 
@@ -155,9 +156,7 @@ def plot_entropy_acc_cert(ent_acc_cert, labels, sigma, iterations, weighted_avg,
 
     ax.scatter(probability, entropy, 0, marker='X', c='k', s=100, alpha=1)
 
-    ax.plot(x,y, c='k', linestyle='dashed')
-
-    plot_bounds(classes=unique_labels)
+    ax.plot(x, y, c='k', linestyle='dashed')
 
     ax.set_zlim(0, 1.1)
     ax.set_xlim(0, 1.1)

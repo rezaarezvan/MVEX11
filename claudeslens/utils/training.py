@@ -66,6 +66,7 @@ def remove_noise_attention(model, noise_data):
 
 @torch.no_grad()
 def add_noise_conv_weights(model, sigma):
+    model.eval().to(DEVICE)
     noise_data = []
     for module in model.modules():
         if isinstance(module, nn.Conv2d):
@@ -80,6 +81,7 @@ def add_noise_conv_weights(model, sigma):
 
 
 def remove_noise_conv_weights(model, noise_data):
+    model.eval().to(DEVICE)
     noise_iter = iter(noise_data)
     for module in model.modules():
         if isinstance(module, nn.Conv2d):

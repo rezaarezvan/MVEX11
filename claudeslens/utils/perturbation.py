@@ -219,29 +219,30 @@ def model_is_uncertain(data, cutoff_acc=0.10):
 
     return is_uncertain
 
+
 def get_min_max_ent(test_loader, sigma, data):
-    if not( (0.05 < sigma < 0.2) or (sigma > 9)):
+    if not ((0.05 < sigma < 0.2) or (sigma > 9)):
         return None, None
 
     tensor = test_loader.dataset.targets.view(-1)
     indices_of_4 = torch.where(tensor == 4)[0]
 
     eac_weights = data["ent_acc_cert_weights"]
-    eac_images  = data["ent_acc_cert_images"]
+    eac_images = data["ent_acc_cert_images"]
 
-    weight_ent  = [eac_weights[x] for x in indices_of_4]
+    weight_ent = [eac_weights[x] for x in indices_of_4]
     max_weight_ent = max([weight_ent[x] for x in range(len(weight_ent))])
     min_weight_ent = min([weight_ent[x] for x in range(len(weight_ent))])
 
-    image_ent  = [eac_images[x] for x in indices_of_4]
+    image_ent = [eac_images[x] for x in indices_of_4]
     max_image_ent = max([image_ent[x] for x in range(len(image_ent))])
     min_image_ent = min([image_ent[x] for x in range(len(image_ent))])
 
-    weight_positions = (eac_weights.index(max_weight_ent), eac_weights.index(min_weight_ent))
-    image_positions = (eac_images.index(max_image_ent), eac_images.index(min_image_ent))
+    weight_positions = (eac_weights.index(max_weight_ent),
+                        eac_weights.index(min_weight_ent))
+    image_positions = (eac_images.index(max_image_ent),
+                       eac_images.index(min_image_ent))
     return weight_positions, image_positions
-
-
 
 
 def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas=[0.1, 0.5, 1], entropy_window_size=0.1,
@@ -249,7 +250,6 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
     """
     Main evaluation loop for the perturbation tests for the model
     """
-
     if LOAD_DATA:
         print("Loading data from file")
         f = open(f"results/{model.__class__.__name__}.json", 'r')
@@ -257,10 +257,11 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
 
         for sigma, sigma_data in all_sigma_data["all_sigma_data"].items():
             sigma = float(sigma)
-            # Just testing some image comparison between high and low entropy values
-            weight_pos, image_pos = get_min_max_ent(test_loader, sigma, sigma_data)
-            if weight_pos: 
-                plot_pic_comparison(test_loader, sigma, sigma_data["ent_acc_cert_weights"], weight_pos)
+            weight_pos, image_pos = get_min_max_ent(
+                test_loader, sigma, sigma_data)
+            if weight_pos:
+                plot_pic_comparison(
+                    test_loader, sigma, sigma_data["ent_acc_cert_weights"], weight_pos)
 
             for _lambda in lambdas:
                 psi_weight = psi(
@@ -295,8 +296,8 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
             print(
                 f"For σ: {sigma}, model is uncertain: {is_uncertain} for image perturbation")
 
-        # plot_weight_avg(all_sigma_data["weighted_average"], SAVE_PLOT=SAVE_PLOT,
-        #                model_name=model.__class__.__name__)
+        plot_weight_avg(all_sigma_data["weighted_average"], SAVE_PLOT=SAVE_PLOT,
+                        model_name=model.__class__.__name__)
 
         print("Pair Entanglement")
         print(all_sigma_data["pair_entaglement"])
@@ -315,88 +316,87 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
         sigma_data = {}
         psi_list = []
 
-        # pi = pi_weight(model, test_loader, og_acc, sigma=sigma, iters=iters)
-        # print(f"σ: {sigma}, π_w: {pi}")
+        pi = pi_weight(model, test_loader, og_acc, sigma=sigma, iters=iters)
+        print(f"σ: {sigma}, π_w: {pi}")
         pi = pi_image(model, test_loader, og_acc, sigma=sigma, iters=iters)
         print(f"σ: {sigma}, π_i: {pi}")
 
-    #     print("--------------------------------------------------")
-    #     print("Weight perturbation")
-    #     ent_acc_cert_weights = evaluate_weight_perturbation(
-    #         model, test_loader, sigma=sigma, iters=iters)
-    #     print("--------------------------------------------------")
-    #     print("Image perturbation")
-    #     ent_acc_cert_images = evaluate_image_perturbation(
-    #         model, test_loader, sigma=sigma, iters=iters)
-    #     weighted_average.append(
-    #         (weight_avg(ent_acc_cert_weights, window_size=entropy_window_size), sigma))
-    #
-    #     matrix_with_correct_label = evaluate_pair_entanglement(
-    #         model, test_loader, sigma=sigma, iters=iters, threshold=0)
-    #
-    #     pair_entaglement.append(matrix_with_correct_label)
-    #
-    #     sigma_data["pi"] = pi
-    #     sigma_data["ent_acc_cert_weights"] = ent_acc_cert_weights
-    #     sigma_data["ent_acc_cert_images"] = ent_acc_cert_images
-    #     sigma_data["weighted_average"] = weighted_average[-1]
-    #     sigma_data["matrix_with_correct_label"] = matrix_with_correct_label
-    #
-    #     plot_entropy_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
-    #                           iters, SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
-    #     barplot_ent_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
-    #                          SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
-    #     plot_entropy_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
-    #                           iters, SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
-    #     barplot_ent_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
-    #                          SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
-    #
-    #     is_uncertain = model_is_uncertain(ent_acc_cert_weights)
-    #     print(
-    #         f"For σ: {sigma}, model is uncertain: {is_uncertain} for weight perturbation")
-    #     is_uncertain = model_is_uncertain(ent_acc_cert_images)
-    #     print(
-    #         f"For σ: {sigma}, model is uncertain: {is_uncertain} for image perturbation")
-    #
-    #     for _lambda in lambdas:
-    #         psi_value = psi(ent_acc_cert_weights, _lambda=_lambda)
-    #         print(f"λ: {_lambda}, ψ: {psi_value}")
-    #         psi_list.append(psi_value)
-    #         sigma_data[f"psi_lambda_{_lambda}"] = psi_value
-    #
-    #     all_sigma_data[sigma] = sigma_data
-    #     list_of_psi_list.append(psi_list)
-    #     print('-----------------------------------\n')
-    #
-    # best_psi, best_sigma = max_psi_sigma(list_of_psi_list, sigmas)
-    # print(f"Max: (ψ: {best_psi}, σ: {best_sigma})")
-    # plot_weight_avg(weighted_average, SAVE_PLOT=SAVE_PLOT,
-    #                 model_name=model.__class__.__name__)
-    #
-    # print("Pair Entanglement")
-    # print(pair_entaglement)
-    #
-    # ent_acc_cert_data = {
-    #     "all_sigma_data": all_sigma_data,
-    #     "weighted_average": weighted_average,
-    #     "pair_entaglement": pair_entaglement,
-    #     "model_name": model.__class__.__name__
-    # }
-    #
-    # os.makedirs('results', exist_ok=True)
-    # path = f"results/{model.__class__.__name__}.json"
-    #
-    # if os.path.exists(path):
-    #     with open(path, 'r') as json_file:
-    #         data = json.load(json_file)
-    #
-    #     data["all_sigma_data"].update(all_sigma_data)
-    #
-    #     with open(path, 'w') as json_file:
-    #         json.dump(data, json_file, indent=4)
-    # else:
-    #     with open(path, 'w') as json_file:
-    #         json.dump(ent_acc_cert_data, json_file, indent=4)
+        print("--------------------------------------------------")
+        print("Weight perturbation")
+        ent_acc_cert_weights = evaluate_weight_perturbation(
+            model, test_loader, sigma=sigma, iters=iters)
+        print("--------------------------------------------------")
+        print("Image perturbation")
+        ent_acc_cert_images = evaluate_image_perturbation(
+            model, test_loader, sigma=sigma, iters=iters)
+        weighted_average.append(
+            (weight_avg(ent_acc_cert_weights, window_size=entropy_window_size), sigma))
+
+        matrix_with_correct_label = evaluate_pair_entanglement(
+            model, test_loader, sigma=sigma, iters=iters, threshold=0)
+
+        pair_entaglement.append(matrix_with_correct_label)
+
+        sigma_data["pi"] = pi
+        sigma_data["ent_acc_cert_weights"] = ent_acc_cert_weights
+        sigma_data["ent_acc_cert_images"] = ent_acc_cert_images
+        sigma_data["weighted_average"] = weighted_average[-1]
+        sigma_data["matrix_with_correct_label"] = matrix_with_correct_label
+        plot_entropy_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma, iters, SAVE_PLOT=SAVE_PLOT,
+                              type='weight', model_name=model.__class__.__name__, weighted_avg=weighted_average[-1])
+        barplot_ent_acc_cert(ent_acc_cert_weights, test_loader.dataset.targets, sigma,
+                             SAVE_PLOT=SAVE_PLOT, type='weight', model_name=model.__class__.__name__)
+        plot_entropy_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma, iters, SAVE_PLOT=SAVE_PLOT,
+                              type='image', model_name=model.__class__.__name__, weighted_avg=weighted_average[-1])
+        barplot_ent_acc_cert(ent_acc_cert_images, test_loader.dataset.targets, sigma,
+                             SAVE_PLOT=SAVE_PLOT, type='image', model_name=model.__class__.__name__)
+
+        is_uncertain = model_is_uncertain(ent_acc_cert_weights)
+        print(
+            f"For σ: {sigma}, model is uncertain: {is_uncertain} for weight perturbation")
+        is_uncertain = model_is_uncertain(ent_acc_cert_images)
+        print(
+            f"For σ: {sigma}, model is uncertain: {is_uncertain} for image perturbation")
+
+        for _lambda in lambdas:
+            psi_value = psi(ent_acc_cert_weights, _lambda=_lambda)
+            print(f"λ: {_lambda}, ψ: {psi_value}")
+            psi_list.append(psi_value)
+            sigma_data[f"psi_lambda_{_lambda}"] = psi_value
+
+        all_sigma_data[sigma] = sigma_data
+        list_of_psi_list.append(psi_list)
+        print('-----------------------------------\n')
+
+    best_psi, best_sigma = max_psi_sigma(list_of_psi_list, sigmas)
+    print(f"Max: (ψ: {best_psi}, σ: {best_sigma})")
+    plot_weight_avg(weighted_average, SAVE_PLOT=SAVE_PLOT,
+                    model_name=model.__class__.__name__)
+
+    print("Pair Entanglement")
+    print(pair_entaglement)
+
+    ent_acc_cert_data = {
+        "all_sigma_data": all_sigma_data,
+        "weighted_average": weighted_average,
+        "pair_entaglement": pair_entaglement,
+        "model_name": model.__class__.__name__
+    }
+
+    os.makedirs('results', exist_ok=True)
+    path = f"results/{model.__class__.__name__}.json"
+
+    if os.path.exists(path):
+        with open(path, 'r') as json_file:
+            data = json.load(json_file)
+
+        data["all_sigma_data"].update(all_sigma_data)
+
+        with open(path, 'w') as json_file:
+            json.dump(data, json_file, indent=4)
+    else:
+        with open(path, 'w') as json_file:
+            json.dump(ent_acc_cert_data, json_file, indent=4)
 
     # For attention and feature maps:
 
@@ -407,9 +407,9 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
     #                        sigma=sigma, SAVE_PLOT=SAVE_PLOT)
     #         remove_noise_attention(model, noise)
 
-    # if isinstance(model, ClaudesLens_ConvNext) or isinstance(model, Pretrained_ConvNext):
-    #     for sigma in sigmas:
-    #         noise = add_noise_conv_weights(model, sigma)
-    #         eval_features(model, test_loader, n=3,
-    #                       sigma=sigma, SAVE_PLOT=SAVE_PLOT)
-    #         remove_noise_conv_weights(model, noise)
+    if isinstance(model, ClaudesLens_ConvNext) or isinstance(model, Pretrained_ConvNext):
+        for sigma in sigmas:
+            noise = add_noise_conv_weights(model, sigma)
+            eval_features(model, test_loader, n=3,
+                          sigma=sigma, SAVE_PLOT=SAVE_PLOT)
+            remove_noise_conv_weights(model, noise)
