@@ -35,7 +35,7 @@ def plot_activation_functions():
     plt.grid(True)
     plt.title('Activation Functions')
     plt.tight_layout()
-    plt.savefig('activation_functions.pdf', bbox_inches='tight')
+    plt.savefig('activation_functions.png', bbox_inches='tight', dpi=300)
     plt.show()
 
 
