@@ -225,23 +225,25 @@ def get_min_max_ent(test_loader, sigma, data):
         return None, None
 
     tensor = test_loader.dataset.targets.view(-1)
-    indices_of_4 = torch.where(tensor == 4)[0]
+    indices_of_4 = torch.where(tensor == 1)[0]
 
     eac_weights = data["ent_acc_cert_weights"]
     eac_images = data["ent_acc_cert_images"]
 
     weight_ent = [eac_weights[x] for x in indices_of_4]
-    max_weight_ent = max([weight_ent[x] for x in range(len(weight_ent))])
-    min_weight_ent = min([weight_ent[x] for x in range(len(weight_ent))])
+    max_weight_ent = max(weight_ent, key=lambda x: x[:][2])
+    min_weight_ent = min(weight_ent, key=lambda x: x[:][2])
 
     image_ent = [eac_images[x] for x in indices_of_4]
-    max_image_ent = max([image_ent[x] for x in range(len(image_ent))])
-    min_image_ent = min([image_ent[x] for x in range(len(image_ent))])
+    max_image_ent = max(image_ent, key=lambda x: x[:][2])
+    min_image_ent = min(image_ent, key=lambda x: x[:][2])
 
     weight_positions = (eac_weights.index(max_weight_ent),
                         eac_weights.index(min_weight_ent))
+
     image_positions = (eac_images.index(max_image_ent),
                        eac_images.index(min_image_ent))
+
     return weight_positions, image_positions
 
 
@@ -259,9 +261,11 @@ def perturbation(model, test_loader, iters=10, sigmas=[0, 0.01, 0.1, 1], lambdas
             sigma = float(sigma)
             weight_pos, image_pos = get_min_max_ent(
                 test_loader, sigma, sigma_data)
-            if weight_pos:
+            if weight_pos and image_pos:
                 plot_pic_comparison(
                     test_loader, sigma, sigma_data["ent_acc_cert_weights"], weight_pos)
+                plot_pic_comparison(
+                    test_loader, sigma, sigma_data["ent_acc_cert_images"], image_pos)
 
             for _lambda in lambdas:
                 psi_weight = psi(
