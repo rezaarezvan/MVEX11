@@ -25,9 +25,24 @@ To download the pretrained weights, run the following command:
 python3 extra/weights.py
 ```
 
-
 ### Testing
 ```
 python3 -m pip install -e '.[testing]'
 python3 -m pytest
+```
+
+### Citation
+
+If you'd like to cite my thesis, you can use the following BibTeX:
+
+```bibtex
+@misc{claudeslens
+      title={ClaudesLens: Uncertainty Quantification in Computer Vision Models}, 
+      author={Mohamad Al Shaar and Nils Ekström and Gustav Gille and Reza Rezvan and Ivan Wely},
+      year={2024},
+      eprint={2406.13008},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2406.13008}, 
+}
 ```
