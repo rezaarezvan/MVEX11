@@ -33,7 +33,7 @@ python3 -m pytest
 
 ### Citation
 
-If you'd like to cite my thesis, you can use the following BibTeX:
+If you'd like to cite our thesis, you can use the following BibTeX:
 
 ```bibtex
 @misc{claudeslens
